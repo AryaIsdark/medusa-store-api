@@ -30,7 +30,7 @@ steps:
     replaceExistingArchive: true
 - task: AzureWebApp@1
   inputs:
-    azureSubscription: 'Free Trial'
+    azureSubscription: 08f5b387-c3ca-402e-94b6-ab730193c300
     appType: 'webApp'
     appName: 'medusastoreapi'
     package: '$(System.DefaultWorkingDirectory)/**/*.zip'
