@@ -9,8 +9,9 @@ const headerConfig = {
   },
 };
 
-const createOrderObj = (cart) => {
-  const orderLines = cart.items.map((item) => ({
+const createOrderObj = (order, cart) => {
+  console.log("aaaaaaaaaaaaaa", order, cart);
+  const orderLines = order.items.map((item) => ({
     rowNumber: item.id,
     articleNumber: "random article number",
     numberOfItems: item.quantity,
@@ -23,7 +24,7 @@ const createOrderObj = (cart) => {
   const shipping_address = cart.shipping_address;
   const orderData = {
     goodsOwnerId: WMS_GOODS_OWNER_ID,
-    orderNumber: cart.id,
+    orderNumber: order.id,
     deliveryDate: "2023-06-24",
     consignee: {
       name: shipping_address.first_name + "" + shipping_address.last_name,
@@ -48,8 +49,8 @@ class WmsService {
     return await axios.get(url, headerConfig);
   };
 
-  submitOrder = async (cart) => {
-    const orderData = createOrderObj(cart);
+  submitOrder = async (order, cart) => {
+    const orderData = createOrderObj(order, cart);
     const url = `${WMS_BASE_API}/orders`;
     return await axios.put(url, orderData, headerConfig);
   };
