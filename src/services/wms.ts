@@ -10,7 +10,6 @@ const headerConfig = {
 };
 
 const createOrderObj = (order, cart) => {
-  console.log("aaaaaaaaaaaaaa", order, cart);
   const orderLines = order.items.map((item) => ({
     rowNumber: item.id,
     articleNumber: "random article number",
