@@ -36,11 +36,11 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const plugins = [
   `medusa-fulfillment-manual`,
   `medusa-payment-manual`,
-  `@medusajs/file-local`,
   {
     resolve: `@medusajs/file-local`,
     options: {
       upload_dir: "uploads",
+      base_url: process.env.FILE_STORAGE_URL || "http://localhost:9000",
     },
   },
   {
