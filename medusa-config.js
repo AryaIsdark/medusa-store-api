@@ -39,9 +39,8 @@ const plugins = [
   {
     resolve: `@medusajs/file-local`,
     options: {
-      upload_dir: `${
-        process.env.FILE_STORAGE_URL || "http://localhost:7000"
-      }/uploads/images`,
+      upload_dir: "uploads",
+      backend_url: process.env.FILE_STORAGE_URL,
     },
   },
   {
