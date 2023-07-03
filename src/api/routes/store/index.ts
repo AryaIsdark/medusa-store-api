@@ -2,6 +2,7 @@ import { Router } from "express";
 import wmsSubmitOrder from "./wms-submit-order";
 import webhookOrderStatus from "./webhook-order-status";
 import wmsCheckItemAvailability from "./wms-check-item-availabilty";
+import wmsOrderPickedUp from "./webhook-order-picked-up";
 import { wrapHandler } from "@medusajs/medusa";
 
 // Initialize a custom router
@@ -17,4 +18,5 @@ export function attachStoreRoutes(storeRouter: Router) {
   router.get("/check-item-availability", wrapHandler(wmsCheckItemAvailability));
   router.get("/create-wms-order", wrapHandler(wmsSubmitOrder));
   router.post("/webhooks/order-status", wrapHandler(webhookOrderStatus));
+  router.post("/webhooks/order-picked-up", wrapHandler(wmsOrderPickedUp));
 }
