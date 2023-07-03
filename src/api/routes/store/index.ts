@@ -16,5 +16,5 @@ export function attachStoreRoutes(storeRouter: Router) {
   // router.get("/", wrapHandler(wmsSubmitOrder));
   router.get("/check-item-availability", wrapHandler(wmsCheckItemAvailability));
   router.get("/create-wms-order", wrapHandler(wmsSubmitOrder));
-  router.get("/webhooks/order-status", wrapHandler(webhookOrderStatus));
+  router.post("/webhooks/order-status", wrapHandler(webhookOrderStatus));
 }
