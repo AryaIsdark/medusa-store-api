@@ -1,5 +1,6 @@
 import { Router } from "express";
 import wmsSubmitOrder from "./wms-submit-order";
+import webhookOrderStatus from "./webhook-order-status";
 import wmsCheckItemAvailability from "./wms-check-item-availabilty";
 import { wrapHandler } from "@medusajs/medusa";
 
@@ -15,4 +16,5 @@ export function attachStoreRoutes(storeRouter: Router) {
   // router.get("/", wrapHandler(wmsSubmitOrder));
   router.get("/check-item-availability", wrapHandler(wmsCheckItemAvailability));
   router.get("/create-wms-order", wrapHandler(wmsSubmitOrder));
+  router.get("/webhooks/order-status", wrapHandler(webhookOrderStatus));
 }
