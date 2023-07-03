@@ -5,11 +5,13 @@ export default async (req: Request, res: Response): Promise<void> => {
   //   const article = await wmsService.checkItemAvailibility(
   //     req.query.articleNumber
   //   );
+  console.log("request from order-status webhook", req.body);
+  //   console.log("response from order-status webhook", res);
 
   res.json({
     status: 200,
     data: {
-      req,
+      req: req.body,
       res,
     },
   });
