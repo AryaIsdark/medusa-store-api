@@ -12,7 +12,6 @@ export default async (req: Request, res: Response): Promise<void> => {
     status: 200,
     data: {
       req: req.body,
-      res,
     },
   });
 };
