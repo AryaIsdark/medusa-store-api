@@ -1,13 +1,24 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
-import { Order, Cart, OrderLine, Consignee, OrderData } from "models/wms/types";
+import {
+  ProductVariant,
+  ProductVariantService,
+  TransactionBaseService,
+  Order,
+  Cart,
+  LineItem,
+} from "@medusajs/medusa";
+import { WMSOrderLine, WMSConsignee, WMSOrderData } from "models/wms/types";
 
-class WmsService {
+class WmsService extends TransactionBaseService {
   private readonly WMS_BASE_API: string;
   private readonly WMS_GOODS_OWNER_ID: string;
   private readonly WMS_AUTHENTICATION: string;
   private readonly headerConfig: AxiosRequestConfig;
+  productVariantService: ProductVariantService;
 
-  constructor() {
+  constructor(container) {
+    super(container);
+    this.productVariantService = container.productVariantService;
     this.WMS_BASE_API = process.env.WMS_BASE_API || "";
     this.WMS_GOODS_OWNER_ID = process.env.WMS_GOODS_OWNER_ID || "";
     this.WMS_AUTHENTICATION = process.env.WMS_AUTHENTICATION || "";
@@ -19,36 +30,62 @@ class WmsService {
     };
   }
 
-  private createOrderObj(order: Order, cart: Cart): OrderData {
-    const orderLines: OrderLine[] = order.items.map((item) => ({
-      rowNumber: item.id,
-      articleNumber: "random article number",
-      numberOfItems: item.quantity,
-      comment: "no comments",
-      shouldBePicked: true,
-      serialNumber: "string",
-      lineTotalCustomsValue: 0,
-      batchNumber: "string",
-    }));
-
-    const shippingAddress = cart.shipping_address;
-    const consignee: Consignee = {
-      name: shippingAddress.first_name + " " + shippingAddress.last_name,
-      address1: shippingAddress.address_1,
-      address2: shippingAddress.address_2,
-      address3: shippingAddress.address_3 || "",
-      postCode: shippingAddress.postal_code,
-      city: shippingAddress.city,
-      countryCode: shippingAddress.country_code,
-      countryStateCode: shippingAddress.country_code,
+  private getConsigneePayload = (cart: Cart): WMSConsignee => {
+    return {
+      name:
+        cart.shipping_address.first_name +
+        " " +
+        cart.shipping_address.last_name,
+      address1: cart.shipping_address.address_1,
+      address2: cart.shipping_address.address_2,
+      postCode: cart.shipping_address.postal_code,
+      city: cart.shipping_address.city,
+      countryCode: cart.shipping_address.country_code,
+      countryStateCode: cart.shipping_address.country_code,
       remark: "",
       doorCode: "",
     };
+  };
 
-    const orderData: OrderData = {
+  private createOrderLinePayload = async (orderItems: LineItem[]) => {
+    const orderLines: WMSOrderLine[] = await Promise.all(
+      orderItems.map(async (item) => {
+        const productVariant = await this.productVariantService.retrieve(
+          item.variant_id
+        );
+
+        return {
+          rowNumber: item.id,
+          articleName: productVariant.title,
+          articleNumber: productVariant.sku || "SKU not available",
+          barcode: productVariant.barcode || "Barcode not available",
+          ean: productVariant.ean || "EAN not available",
+          numberOfItems: item.quantity,
+          comment: "no comments",
+          shouldBePicked: true,
+          serialNumber: "string",
+          lineTotalCustomsValue: 0,
+          batchNumber: "string",
+        };
+      })
+    );
+
+    return orderLines;
+  };
+
+  private async createOrderPayload(
+    order: Order,
+    cart: Cart
+  ): Promise<WMSOrderData> {
+    const orderLines = await this.createOrderLinePayload(order.items);
+    const consignee = this.getConsigneePayload(cart);
+
+    console.log("olololololololololo", orderLines);
+
+    const orderData: WMSOrderData = {
       goodsOwnerId: this.WMS_GOODS_OWNER_ID,
       orderNumber: order.id,
-      deliveryDate: "2023-06-24",
+      deliveryDate: "2023-07-24",
       consignee,
       orderLines,
     };
@@ -63,10 +100,46 @@ class WmsService {
     return await axios.get(url, this.headerConfig);
   }
 
+  public getProductVariant = async (variantId: string) => {
+    return await this.productVariantService.retrieve(variantId);
+  };
+
   public async submitOrder(order: Order, cart: Cart): Promise<AxiosResponse> {
-    const orderData = this.createOrderObj(order, cart);
+    const payload = await this.createOrderPayload(order, cart);
     const url = `${this.WMS_BASE_API}/orders`;
-    return await axios.put(url, orderData, this.headerConfig);
+    return await axios.put(url, payload, this.headerConfig);
+  }
+
+  public async createArticles(productVariants: ProductVariant[]) {
+    const url = `${this.WMS_BASE_API}/articles`;
+    const successfulItems = [];
+    const unsuccessfulItems = [];
+    const requests = productVariants.map((productVariant) => {
+      const wmsArticle = {
+        goodsOwnerId: this.WMS_GOODS_OWNER_ID,
+        articleNumber: productVariant.sku,
+        articleName: `${productVariant.title}`,
+        productCode: productVariant.ean || "product code not available",
+        barCodeInfo: {
+          barcode: productVariant.barcode,
+        },
+        weight: productVariant.weight,
+        height: productVariant.height,
+      };
+
+      return axios
+        .put(url, wmsArticle, this.headerConfig)
+        .then((res) =>
+          successfulItems.push({ item: productVariant, wmsResponse: res.data })
+        )
+        .catch((err) =>
+          unsuccessfulItems.push({ item: productVariant, wsmError: err })
+        );
+    });
+
+    const results = await Promise.all(requests);
+
+    return { results, successfulItems, unsuccessfulItems };
   }
 }
 

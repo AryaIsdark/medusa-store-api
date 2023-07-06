@@ -1,30 +1,6 @@
-export type OrderItem = {
-  id: string;
-  quantity: number;
-};
-
-export type ShippingAddress = {
-  first_name: string;
-  last_name: string;
-  address_1: string;
-  address_2: string;
-  address_3?: string;
-  postal_code: string;
-  city: string;
-  country_code: string;
-};
-
-export type Order = {
-  id: string;
-  items: OrderItem[];
-};
-
-export type Cart = {
-  shipping_address: ShippingAddress;
-};
-
-export type OrderLine = {
+export type WMSOrderLine = {
   rowNumber: string;
+  articleName: string;
   articleNumber: string;
   numberOfItems: number;
   comment: string;
@@ -32,13 +8,14 @@ export type OrderLine = {
   serialNumber: string;
   lineTotalCustomsValue: number;
   batchNumber: string;
+  ean: string;
+  barcode: string;
 };
 
-export type Consignee = {
+export type WMSConsignee = {
   name: string;
   address1: string;
   address2: string;
-  address3: string;
   postCode: string;
   city: string;
   countryCode: string;
@@ -47,10 +24,10 @@ export type Consignee = {
   doorCode: string;
 };
 
-export type OrderData = {
+export type WMSOrderData = {
   goodsOwnerId: string;
   orderNumber: string;
   deliveryDate: string;
-  consignee: Consignee;
-  orderLines: OrderLine[];
+  consignee: WMSConsignee;
+  orderLines: WMSOrderLine[];
 };
