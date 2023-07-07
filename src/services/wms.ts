@@ -159,35 +159,36 @@ class WmsService extends TransactionBaseService {
 
   public createFulfillment = async (wmsOrderNumber: string) => {
     this.orderService.retrieve(wmsOrderNumber).then((order) => {
-      const fulFillmentOrder: CreateFulfillmentOrder = {
-        ...order,
-        is_claim: false,
-        email: order.email,
-        payments: [],
-        discounts: [],
-        currency_code: order.currency.code,
-        tax_rate: order.tax_rate || null,
-        region_id: order.region_id,
-        region: order.region,
-        is_swap: false,
-        display_id: order.display_id,
-        billing_address: order.billing_address,
-        items: order.items,
-        shipping_methods: order.shipping_methods,
-        no_notification: order.no_notification,
-        claim_items: [],
-        additional_items: [],
-        type: null,
-        order_id: order.id,
-        return_order: null,
-        refund_amount: null,
-        deleted_at: null,
-        updated_at: null,
-      };
-      this.fulfillmentService
-        .createFulfillment(fulFillmentOrder, [])
-        .then((fulfillmentRes) => console.log("fulfillmentRes", fulfillmentRes))
-        .catch((err) => console.log("eeeeeeeeeeeeeeeeeeee", console.error()));
+      console.log(order);
+      // const fulFillmentOrder: CreateFulfillmentOrder = {
+      //   ...order,
+      //   is_claim: false,
+      //   email: order.email,
+      //   payments: [],
+      //   discounts: [],
+      //   currency_code: order.currency.code,
+      //   tax_rate: order.tax_rate || null,
+      //   region_id: order.region_id,
+      //   region: order.region,
+      //   is_swap: false,
+      //   display_id: order.display_id,
+      //   billing_address: order.billing_address,
+      //   items: order.items,
+      //   shipping_methods: order.shipping_methods,
+      //   no_notification: order.no_notification,
+      //   claim_items: [],
+      //   additional_items: [],
+      //   type: null,
+      //   order_id: order.id,
+      //   return_order: null,
+      //   refund_amount: null,
+      //   deleted_at: null,
+      //   updated_at: null,
+      // };
+      // this.fulfillmentService
+      // .createFulfillment(fulFillmentOrder, [])
+      // .then((fulfillmentRes) => console.log("fulfillmentRes", fulfillmentRes))
+      // .catch((err) => console.log("eeeeeeeeeeeeeeeeeeee", console.error()));
     });
   };
 }
