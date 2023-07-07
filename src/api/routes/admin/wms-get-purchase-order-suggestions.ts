@@ -7,8 +7,8 @@ const getArticleQuantity = (inventoryPerWarehouse) => {
   }, 0);
 };
 
-const getAllArticlesInOrders = (orders) => {
-  const articles = [];
+const getAllArticlesInOrders = (orders: Order[]) => {
+  const articles: Article[] = [];
   const articleNumbers = new Set();
 
   orders.forEach((order) => {
@@ -26,7 +26,7 @@ const getAllArticlesInOrders = (orders) => {
   return articles;
 };
 
-const getArticleName = (articles, articleInventory) => {
+const getArticleName = (articles: Article[], articleInventory) => {
   const article = articles.find(
     (article) => article.articleNumber === articleInventory.articleNumber
   );
