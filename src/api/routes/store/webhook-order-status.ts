@@ -13,9 +13,24 @@ export default async (req: Request, res: Response): Promise<void> => {
   const orderNumber = req.body.orderNumber;
   const orderStatus = req.body.orderStatus;
 
+  // Something has gone wrong with the order.
+  if (orderStatus.number === 150) {
+    // TODO
+    // update Order in Meudsa change status to actionRequired
+    // Send and email to admin with URL
+  }
+
+  // The order is in an editable state.
+  if (orderStatus.number === 200) {
+    // TODO
+    // update Order in Meudsa change status to confirmed
+    // Send and email to admin with URL
+  }
+
   // Order Status 400 means that the order has been picked.
   if (orderStatus.number === 400) {
     // TODO
+    // update Order in Meudsa change status to confirmed
     wmsService.createFulfillment(orderNumber);
   }
 

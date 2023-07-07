@@ -1,5 +1,6 @@
 import { Router } from "express";
 import wmsCreateArticles from "./wms-create-articles";
+import wmsGetPurchaseOrderSuggestions from "./wms-get-purchase-order-suggestions";
 import { wrapHandler } from "@medusajs/medusa";
 
 // Initialize a custom router
@@ -10,4 +11,8 @@ export function attachAdminRoutes(adminRouter: Router) {
   adminRouter.use("/wms", router);
 
   router.put("/create-articles", wrapHandler(wmsCreateArticles));
+  router.get(
+    "/purchase-orders/suggestions",
+    wrapHandler(wmsGetPurchaseOrderSuggestions)
+  );
 }

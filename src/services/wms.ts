@@ -1,4 +1,4 @@
-import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
+import axios, { AxiosResponse, AxiosRequestConfig, AxiosHeaders } from "axios";
 import {
   ProductVariant,
   ProductVariantService,
@@ -11,6 +11,7 @@ import {
 } from "@medusajs/medusa";
 import { WMSOrderLine, WMSConsignee, WMSOrderData } from "models/wms/types";
 import { CreateFulfillmentOrder } from "@medusajs/medusa/dist/types/fulfillment";
+import { URLSearchParams } from "url";
 
 class WmsService extends TransactionBaseService {
   private readonly WMS_BASE_API: string;
@@ -190,6 +191,42 @@ class WmsService extends TransactionBaseService {
       // .then((fulfillmentRes) => console.log("fulfillmentRes", fulfillmentRes))
       // .catch((err) => console.log("eeeeeeeeeeeeeeeeeeee", console.error()));
     });
+  };
+
+  public getOrders = async () => {
+    const url = `${this.WMS_BASE_API}/orders?goodsOwnerId=${this.WMS_GOODS_OWNER_ID}&maxOrdersToGet=100`;
+    return await axios.get(url, this.headerConfig);
+  };
+
+  public getArticleInventoryPerWarehouse_dep = async (
+    articleNumbers: string[]
+  ) => {
+    const serializedArticleNumbers = articleNumbers.join(",");
+    const url = `${this.WMS_BASE_API}/articles/inventoryPerWarehouse?goodsOwnerId=${this.WMS_GOODS_OWNER_ID}&maxOrdersToGet=100&articleNumbers=${serializedArticleNumbers}`;
+    return await axios.get(url, this.headerConfig);
+  };
+
+  public getArticleInventoryPerWarehouse = async (articleNumbers: string[]) => {
+    const url = `${this.WMS_BASE_API}/articles/inventoryPerWarehouse`;
+    const params = new URLSearchParams();
+    params.append("goodsOwnerId", this.WMS_GOODS_OWNER_ID);
+    params.append("maxOrdersToGet", "100");
+    articleNumbers.forEach((number, index) =>
+      params.append(`articleNumbers[${index}]`, number)
+    );
+
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: this.WMS_AUTHENTICATION,
+        },
+        params: Object.fromEntries(params),
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
   };
 }
 
