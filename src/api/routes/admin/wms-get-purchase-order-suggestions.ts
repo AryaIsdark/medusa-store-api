@@ -1,7 +1,18 @@
 import { Request, Response } from "express";
 import { Order, Article } from "models/wms/types";
 
-const getArticleQuantity = (inventoryPerWarehouse) => {
+const getSuggestedArticleQuanitityToPurchase = (
+  quantityInStock,
+  quantityInOrders
+) => {
+  const diff = quantityInStock - quantityInOrders;
+  if (diff < 0) {
+    // if fx diff is -5 return 5 items to buy
+    return Math.abs(diff);
+  }
+};
+
+const getArticleQuantityInWarehouse = (inventoryPerWarehouse) => {
   return inventoryPerWarehouse.reduce((total, element) => {
     return total + element.numberOfItems;
   }, 0);
@@ -13,10 +24,7 @@ const getAllArticlesInOrders = (orders: Order[]) => {
 
   orders.forEach((order) => {
     order.orderLines.forEach((orderLine) => {
-      if (
-        orderLine.article &&
-        !articleNumbers.has(orderLine.article.articleNumber)
-      ) {
+      if (orderLine.article) {
         articles.push(orderLine.article);
         articleNumbers.add(orderLine.article.articleNumber);
       }
@@ -43,8 +51,16 @@ export default async (req: Request, res: Response) => {
 
   const data = articlesInventoryPerWarehouse.map((articleInventory) => ({
     productReference: articleInventory.articleNumber,
-    productQuantity: getArticleQuantity(articleInventory.inventoryPerWarehouse),
+    productQuantity: getSuggestedArticleQuanitityToPurchase(
+      getArticleQuantityInWarehouse(articleInventory.inventoryPerWarehouse),
+      articleNumbers.filter(
+        (articleNumber) => articleNumber === articleInventory.articleNumber
+      ).length
+    ),
     productName: getArticleName(articles, articleInventory),
+    stock: getArticleQuantityInWarehouse(
+      articleInventory.inventoryPerWarehouse
+    ),
   }));
 
   res.json({
