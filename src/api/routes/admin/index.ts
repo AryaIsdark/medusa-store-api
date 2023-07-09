@@ -1,6 +1,7 @@
 import { Router } from "express";
 import wmsCreateArticles from "./wms-create-articles";
 import wmsGetPurchaseOrderSuggestions from "./wms-get-purchase-order-suggestions";
+import uploadImages from "./upload-images";
 import { wrapHandler } from "@medusajs/medusa";
 
 // Initialize a custom router
@@ -15,4 +16,6 @@ export function attachAdminRoutes(adminRouter: Router) {
     "/purchase-orders/suggestions",
     wrapHandler(wmsGetPurchaseOrderSuggestions)
   );
+
+  router.post("/upload-images", wrapHandler(uploadImages));
 }

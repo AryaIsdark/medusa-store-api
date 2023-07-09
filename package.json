@@ -33,6 +33,7 @@
     "@medusajs/medusa": "^1.12.0",
     "axios": "^1.4.0",
     "body-parser": "^1.19.0",
+    "cloudinary": "^1.37.3",
     "cors": "^2.8.5",
     "express": "^4.17.2",
     "medusa-fulfillment-manual": "^1.1.37",
@@ -40,6 +41,7 @@
     "medusa-payment-manual": "^1.0.23",
     "medusa-payment-paypal": "^6.0.1",
     "medusa-payment-stripe": "^6.0.0",
+    "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.3",
     "typeorm": "^0.3.16"
   },

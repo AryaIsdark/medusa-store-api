@@ -37,13 +37,6 @@ const plugins = [
   `medusa-fulfillment-manual`,
   `medusa-payment-manual`,
   {
-    resolve: `@medusajs/file-local`,
-    options: {
-      upload_dir: "uploads",
-      backend_url: process.env.FILE_STORAGE_URL,
-    },
-  },
-  {
     resolve: `medusa-payment-paypal`,
     options: {
       sandbox: process.env.PAYPAL_SANDBOX,
