@@ -8,6 +8,7 @@ import getVariant from "./get-variant";
 import { wrapHandler } from "@medusajs/medusa";
 
 import supplierBulkAddProducts from "../admin/supplier/supplier-bulk-add-products";
+import syncProducts from "./sync-products";
 
 // Initialize a custom router
 const router = Router();
@@ -24,5 +25,6 @@ export function attachStoreRoutes(storeRouter: Router) {
   router.post("/webhooks/order-status", wrapHandler(webhookOrderStatus));
   router.post("/webhooks/order-picked-up", wrapHandler(wmsOrderPickedUp));
   router.get("/get-variant", wrapHandler(getVariant));
+  router.post("/sync-products", wrapHandler(syncProducts));
   router.post("/bulk-add-products", wrapHandler(supplierBulkAddProducts));
 }
