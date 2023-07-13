@@ -24,6 +24,37 @@ class SupplierService extends TransactionBaseService {
     return success;
   }
 
+  async bulkDelete() {
+    const supplierRepo = this.manager_.withRepository(this.supplierRepository);
+    const batchSize = 1000; // Adjust the batch size according to your needs
+
+    try {
+      let offset = 0;
+      let batchDeleted = 0;
+
+      do {
+        const suppliers = await supplierRepo.find({
+          skip: offset,
+          take: batchSize,
+        });
+
+        if (suppliers.length > 0) {
+          await supplierRepo.remove(suppliers);
+          batchDeleted += suppliers.length;
+          offset += batchSize;
+        } else {
+          break; // No more records found, exit the loop
+        }
+      } while (true);
+
+      console.log(
+        `Data deleted successfully. Total records deleted: ${batchDeleted}`
+      );
+    } catch (error) {
+      console.error("Error deleting data:", error);
+    }
+  }
+
   async create(data) {
     const supplierRepo = this.manager_.withRepository(this.supplierRepository);
     const newSupplier = supplierRepo.create(data);

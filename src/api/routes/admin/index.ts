@@ -6,6 +6,7 @@ import { wrapHandler } from "@medusajs/medusa";
 import supplierProcessProductFile from "./supplier/supplier-process-product-file";
 import supplierBulkAddProducts from "./supplier/supplier-bulk-add-products";
 import supplierGetProducts from "./supplier/supplier-get-products";
+import supplierBulkDeleteProducts from "./supplier/supplier-bulk-delete-products";
 
 // Initialize a custom router
 const router = Router();
@@ -33,5 +34,10 @@ export function attachAdminRoutes(adminRouter: Router) {
   router.post(
     "/supplier/bulk-add-products",
     wrapHandler(supplierBulkAddProducts)
+  );
+
+  router.post(
+    "/supplier/bulk-delete-products",
+    wrapHandler(supplierBulkDeleteProducts)
   );
 }
