@@ -31,7 +31,7 @@ export default async (req: multer, res: Response): Promise<void> => {
       // Extract URLs from the Cloudinary upload responses
       const data = uploads.map(
         (uploadResult: cloudinary.UploadApiResponse) => ({
-          url: uploadResult.url,
+          url: uploadResult.secure_url,
         })
       );
 
