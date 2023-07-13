@@ -19,7 +19,7 @@ export default async (req: Request, res: Response): Promise<void> => {
       productService.create({
         title: product.product,
         status: ProductStatus.DRAFT,
-        profile_id: "sp_01H36P9T5AZRCVJW8TER2399S8",
+        profile_id: "sp_01H4ESR3XXVC8X0ZPJZY3045N5",
         thumbnail: uploadResult.secure_url || "",
       });
     });
