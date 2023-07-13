@@ -1,32 +1,4 @@
 import { Request, Response } from "express";
-import nodemailer from "nodemailer";
-
-const sendReciept = (order) => {
-  var transporter = nodemailer.createTransport({
-    service: "gmail",
-    port: 25, // Postfix uses port 25
-    host: "localhost",
-    auth: {
-      user: "*******",
-      pass: "*******",
-    },
-  });
-
-  var mailOptions = {
-    from: "*********",
-    to: order.email,
-    subject: "Sending Email using Node.js",
-    text: "That was easy!",
-  };
-
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("Email sent: " + info.response);
-    }
-  });
-};
 
 export default async (req: Request, res: Response): Promise<void> => {
   const orderService = await req.scope.resolve("orderService");
@@ -50,7 +22,4 @@ export default async (req: Request, res: Response): Promise<void> => {
     status: 200,
     data: orderResponse.data,
   });
-
-  // currently does not work
-  // sendReciept(order);
 };

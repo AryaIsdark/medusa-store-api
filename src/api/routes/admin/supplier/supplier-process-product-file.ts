@@ -1,14 +1,7 @@
-import { Request, Response } from "express";
-import cloudinary from "cloudinary";
+import { Response } from "express";
 import multer from "multer";
 import ExcelJS from "exceljs";
-
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+// import { Supplier } from "models/supplier";
 
 const getNonFlatKeys = (obj) => {
   const nonFlatKeys = [];
@@ -39,12 +32,10 @@ const validateRow = (row) => {
   }
 };
 
-const processExcelFile = async (file) => {
+export const processExcelFile = async (file) => {
   let validationErrors = [];
-  const workbook = new ExcelJS.Workbook();
 
-  // Configure streaming options
-  //   workbook.xlsx.read(file);
+  const workbook = new ExcelJS.Workbook();
 
   // Load the workbook
   await workbook.xlsx.readFile(file);
@@ -64,34 +55,75 @@ const processExcelFile = async (file) => {
   // Define an array to store the row data
   const rows = [];
 
+  // Define the column name mapping
+  const columnNameMapping = {
+    Brand: "brand",
+    Product: "product",
+    RRP: "rrp",
+    "Wholesale Price With Your Discount": "wholeSalePriceWithYourDiscount",
+    "Wholesale Price": "wholeSalePrice",
+    Promo: "promo",
+    "Mega Deal Price": "megaDealPrice",
+    Weight: "weight",
+    SKU: "sku",
+    EAN: "ean",
+    "Expiry Date": "expiryDate",
+    "Country Of Origin": "countryOfOrigin",
+    "Product Url": "productUrl",
+    "Image Url": "imageUrl",
+  };
+
   // Process each row
   worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
     const rowData = {};
     // Process each cell in the row
     row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       const header = headers[colNumber - 1];
-      rowData[header] = cell.value;
+      const propertyName = columnNameMapping[header];
+      if (propertyName) {
+        rowData[propertyName] = cell.value;
+      }
     });
 
     // Push row data to the array
-
     rows.push(rowData);
   });
 
+  const productsArray = []; // Define the array to store the products
   rows.forEach((row) => {
     const rowValidationErrors = validateRow(row);
 
     if (rowValidationErrors?.errors.length) {
       validationErrors.push(rowValidationErrors);
+    } else {
+      // Push product object to the productsArray
+      const product = {
+        brand: row.brand,
+        product: row.product,
+        rpr: row.rrp || 0,
+        wholeSalePriceWithYourDiscount: row.wholeSalePriceWithYourDiscount || 0,
+        wholeSalePrice: row.wholeSalePrice || 0,
+        promo: row.promo || 0,
+        megaDealPrice: row.megaDealPrice || 0,
+        weight: row.weight || 0,
+        sku: row.sku,
+        ean: row.ean,
+        expiryDate: row.expiryDate,
+        countryOfOrigin: row.countryOfOrigin || "N/A",
+        productUrl: row.productUrl || "N/A",
+        imageUrl: row.imageUrl || "N/A",
+      };
+
+      productsArray.push(product);
     }
   });
 
   if (validationErrors.length) {
     throw validationErrors;
   }
-  // Return the list of objects
-  // Exclude header
-  return rows.slice(1, rows.length);
+
+  // Return the list of product objects
+  return productsArray.slice(1, productsArray.length);
 };
 
 const upload = multer({ dest: "uploads/" }).single("file");
@@ -104,19 +136,11 @@ export default async (req: multer, res: Response): Promise<void> => {
     }
     // Access the uploaded file
     const file = req.file;
+
     processExcelFile(file.path)
       .then(async (data) => {
-        const top100 = data.slice(0, 100);
-
-        // const uploads = await Promise.all(
-        //   data.map((item) => cloudinary.v2.uploader.upload(item.imageUrl))
-        // );
-
-        // top100.forEach((item) => cloudinary.v2.uploader.upload(item.imageUrl));
-
         res.json({
           count: data.length,
-          //   uploads: uploads,
           data: data,
         });
       })
@@ -125,6 +149,7 @@ export default async (req: multer, res: Response): Promise<void> => {
           "An error occurred while processing the Excel file:",
           error
         );
+        res.status(400);
         res.json({
           status: 400,
           count: error.length,

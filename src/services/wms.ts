@@ -1,4 +1,4 @@
-import axios, { AxiosResponse, AxiosRequestConfig, AxiosHeaders } from "axios";
+import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
 import {
   ProductVariant,
   ProductVariantService,
@@ -6,11 +6,9 @@ import {
   Order,
   Cart,
   LineItem,
-  FulfillmentService,
   OrderService,
 } from "@medusajs/medusa";
 import { WMSOrderLine, WMSConsignee, WMSOrderData } from "models/wms/types";
-import { CreateFulfillmentOrder } from "@medusajs/medusa/dist/types/fulfillment";
 import { URLSearchParams } from "url";
 
 class WmsService extends TransactionBaseService {
@@ -19,14 +17,12 @@ class WmsService extends TransactionBaseService {
   private readonly WMS_AUTHENTICATION: string;
   private readonly headerConfig: AxiosRequestConfig;
   productVariantService: ProductVariantService;
-  fulfillmentService: FulfillmentService;
   orderService: OrderService;
 
   constructor(container) {
     super(container);
     // Services
     this.productVariantService = container.productVariantService;
-    this.fulfillmentService = container.fulfillmentService;
     this.orderService = container.orderService;
 
     // Configs
@@ -91,8 +87,6 @@ class WmsService extends TransactionBaseService {
     const orderLines = await this.createOrderLinePayload(order.items);
     const consignee = this.getConsigneePayload(cart);
 
-    console.log("olololololololololo", orderLines);
-
     const orderData: WMSOrderData = {
       goodsOwnerId: this.WMS_GOODS_OWNER_ID,
       orderNumber: order.id,
@@ -156,41 +150,6 @@ class WmsService extends TransactionBaseService {
   public getWmsOrder = async (wmsOrderId: string) => {
     const url = `${this.WMS_BASE_API}/orders/${wmsOrderId}`;
     return await axios.get(url, this.headerConfig);
-  };
-
-  public createFulfillment = async (wmsOrderNumber: string) => {
-    this.orderService.retrieve(wmsOrderNumber).then((order) => {
-      console.log(order);
-      // const fulFillmentOrder: CreateFulfillmentOrder = {
-      //   ...order,
-      //   is_claim: false,
-      //   email: order.email,
-      //   payments: [],
-      //   discounts: [],
-      //   currency_code: order.currency.code,
-      //   tax_rate: order.tax_rate || null,
-      //   region_id: order.region_id,
-      //   region: order.region,
-      //   is_swap: false,
-      //   display_id: order.display_id,
-      //   billing_address: order.billing_address,
-      //   items: order.items,
-      //   shipping_methods: order.shipping_methods,
-      //   no_notification: order.no_notification,
-      //   claim_items: [],
-      //   additional_items: [],
-      //   type: null,
-      //   order_id: order.id,
-      //   return_order: null,
-      //   refund_amount: null,
-      //   deleted_at: null,
-      //   updated_at: null,
-      // };
-      // this.fulfillmentService
-      // .createFulfillment(fulFillmentOrder, [])
-      // .then((fulfillmentRes) => console.log("fulfillmentRes", fulfillmentRes))
-      // .catch((err) => console.log("eeeeeeeeeeeeeeeeeeee", console.error()));
-    });
   };
 
   public getOrders = async () => {
