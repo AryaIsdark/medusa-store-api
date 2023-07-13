@@ -15,7 +15,6 @@ const publishJob = async (
     for (const product of draftProducts) {
       await productService.update(product.id, {
         status: "published",
-        sales_channels: [{ id: "sc_01H4ESR4PV1D6EG8AH9G90GKAK" }],
       });
     }
   });

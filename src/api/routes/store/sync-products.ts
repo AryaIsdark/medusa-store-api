@@ -21,6 +21,7 @@ export default async (req: Request, res: Response): Promise<void> => {
         status: ProductStatus.DRAFT,
         profile_id: "sp_01H4ESR3XXVC8X0ZPJZY3045N5",
         thumbnail: uploadResult.secure_url || "",
+        sales_channels: [{ id: "sc_01H4ESR4PV1D6EG8AH9G90GKAK" }],
       });
     });
   });
