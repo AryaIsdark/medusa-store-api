@@ -56,31 +56,35 @@ const plugins = [
   // },
 ];
 
-const modules = {
-  eventBus: {
-    resolve: "@medusajs/event-bus-redis",
-    options: {
-      redisUrl: REDIS_URL,
-    },
-  },
-  cacheService: {
-    resolve: "@medusajs/cache-redis",
-    options: {
-      redisUrl: REDIS_URL,
-    },
-  },
-};
-
-/** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
+let modules = {};
 const projectConfig = {
   jwtSecret: process.env.JWT_SECRET,
   cookieSecret: process.env.COOKIE_SECRET,
   store_cors: STORE_CORS,
   database_url: DATABASE_URL,
   admin_cors: ADMIN_CORS,
-  // Uncomment the following lines to enable REDIS
-  redis_url: REDIS_URL,
 };
+
+if (process.env.ENVIRONMENT !== "development") {
+  modules = {
+    eventBus: {
+      resolve: "@medusajs/event-bus-redis",
+      options: {
+        redisUrl: REDIS_URL,
+      },
+    },
+    cacheService: {
+      resolve: "@medusajs/cache-redis",
+      options: {
+        redisUrl: REDIS_URL,
+      },
+    },
+  };
+
+  projectConfig.redisUrl = REDIS_URL;
+}
+
+/** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
 
 /** @type {import('@medusajs/medusa').ConfigModule} */
 module.exports = {
