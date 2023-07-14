@@ -81,7 +81,7 @@ if (process.env.ENVIRONMENT !== "development") {
     },
   };
 
-  projectConfig.redisUrl = REDIS_URL;
+  projectConfig.redis_url = REDIS_URL;
 }
 
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
