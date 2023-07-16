@@ -5,46 +5,55 @@ import { generateEntityId } from "@medusajs/medusa/dist/utils";
 @Entity()
 export class Supplier extends BaseEntity {
   @Column({ type: "varchar", nullable: true })
-  brand: string;
+  reference: string;
 
   @Column({ type: "varchar", nullable: true })
-  product: string;
+  combinationReference: string;
+
+  @Column({ type: "varchar", nullable: true })
+  ean13: string;
+
+  @Column({ type: "varchar", nullable: true })
+  combinationEan13: string;
 
   @Column({ type: "decimal", nullable: true })
-  rpr: number;
+  combinationPrice: number;
 
   @Column({ type: "decimal", nullable: true })
-  wholeSalePriceWithYourDiscount: number;
+  price: number;
+
+  @Column({ type: "varchar", nullable: true })
+  productName: string;
+
+  @Column({ type: "varchar", nullable: true })
+  attributeGroup: string;
 
   @Column({ type: "decimal", nullable: true })
-  wholeSalePrice: number;
+  costPrice: number;
 
   @Column({ type: "decimal", nullable: true })
-  promo: number;
+  combinationCostPrice: number;
 
-  @Column({ type: "decimal", nullable: true })
-  megaDealPrice: number;
+  @Column({ type: "int", nullable: true })
+  quantity: number;
 
   @Column({ type: "decimal", nullable: true })
   weight: number;
 
   @Column({ type: "varchar", nullable: true })
-  sku: string;
+  product_type: string;
 
   @Column({ type: "varchar", nullable: true })
-  ean: string;
+  category: string;
 
   @Column({ type: "varchar", nullable: true })
-  expiryDate: string;
+  brand: string;
 
   @Column({ type: "varchar", nullable: true })
-  countryOfOrigin: string;
+  supplier: string;
 
   @Column({ type: "varchar", nullable: true })
-  productUrl: string;
-
-  @Column({ type: "varchar", nullable: true })
-  imageUrl: string;
+  productImages: string;
 
   @BeforeInsert()
   private beforeInsert(): void {

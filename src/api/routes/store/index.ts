@@ -7,7 +7,7 @@ import getVariant from "./get-variant";
 
 import { wrapHandler } from "@medusajs/medusa";
 
-import supplierBulkAddProducts from "../admin/supplier/supplier-bulk-add-products";
+import supplierBulkAddProducts from "../admin/supplier_deprecated/supplier-bulk-add-products";
 import syncProducts from "./sync-products";
 
 // Initialize a custom router
