@@ -3,7 +3,8 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class Supplier1689503947191 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE IF NOT EXISTS "supplier" (
+      `DROP TABLE IF EXISTS "supplier"; 
+       CREATE TABLE IF NOT EXISTS "supplier" (
                   "id" character varying NOT NULL,
                   "reference" VARCHAR NULL,
                   "combinationReference" VARCHAR NULL,
