@@ -22,38 +22,43 @@ export default async (req: Request, res: Response): Promise<void> => {
   const supplierProductsPromise = supplierService.list();
 
   const createProductAndVariants = async (productVariants, imageUrls) => {
-    if (productVariants.length) {
-      const baseProduct = productVariants[0];
+    try {
+      if (productVariants.length) {
+        const baseProduct = productVariants[0];
 
-      const newProduct = await productService.create(
-        prepareProductObj(
-          baseProduct,
-          imageUrls,
-          defaulShippingProfile,
-          defaultSalesChannel
-        )
-      );
-
-      if (newProduct.id) {
-        await Promise.all(
-          productVariants.map(async (variant) => {
-            const variantOptions = newProduct.options.map((v) => ({
-              option_id: v.id,
-              value: variant.attributeGroup ?? variant.productName,
-            }));
-
-            await productVariantService.create(
-              newProduct.id,
-              prepareProductVarianObj(
-                variant,
-                newProduct,
-                regions,
-                variantOptions
-              )
-            );
-          })
+        const newProduct = await productService.create(
+          prepareProductObj(
+            baseProduct,
+            imageUrls,
+            defaulShippingProfile,
+            defaultSalesChannel
+          )
         );
+
+        if (newProduct.id) {
+          await Promise.all(
+            productVariants.map(async (variant) => {
+              const variantOptions = newProduct.options.map((v) => ({
+                option_id: v.id,
+                value: variant.attributeGroup ?? variant.productName,
+              }));
+
+              await productVariantService.create(
+                newProduct.id,
+                prepareProductVarianObj(
+                  variant,
+                  newProduct,
+                  regions,
+                  variantOptions
+                )
+              );
+            })
+          );
+        }
       }
+    } catch (error) {
+      // Handle the error gracefully here, you can log it or perform any other necessary actions.
+      console.error("An unexpected error occurred:", error);
     }
   };
 
