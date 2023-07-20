@@ -9,6 +9,7 @@ import { wrapHandler } from "@medusajs/medusa";
 
 import supplierBulkAddProducts from "../admin/supplier_deprecated/supplier-bulk-add-products";
 import syncProducts from "./sync-products";
+import testTransactionOrc from "./test-transaction-orc";
 
 // Initialize a custom router
 const router = Router();
@@ -27,4 +28,5 @@ export function attachStoreRoutes(storeRouter: Router) {
   router.get("/get-variant", wrapHandler(getVariant));
   router.post("/sync-products", wrapHandler(syncProducts));
   router.post("/bulk-add-products", wrapHandler(supplierBulkAddProducts));
+  router.get("/test-orch", wrapHandler(testTransactionOrc));
 }

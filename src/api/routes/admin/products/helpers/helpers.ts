@@ -56,9 +56,8 @@ export const getImages = (variants) =>
 
 export const prepareProductVarianObj = (
   obj: any,
-  product: any,
-  regions: any,
-  variantOptions: any
+  variantOptions: any,
+  regions: any
 ): CreateProductVariantInput => {
   return {
     title: obj.productName,

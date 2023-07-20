@@ -45,12 +45,7 @@ export default async (req: Request, res: Response): Promise<void> => {
 
               await productVariantService.create(
                 newProduct.id,
-                prepareProductVarianObj(
-                  variant,
-                  newProduct,
-                  regions,
-                  variantOptions
-                )
+                prepareProductVarianObj(variant, variantOptions, regions)
               );
             })
           );

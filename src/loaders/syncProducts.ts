@@ -63,12 +63,7 @@ const syncProductsJob = async (
 
                 await productVariantService.create(
                   newProduct.id,
-                  prepareProductVarianObj(
-                    variant,
-                    newProduct,
-                    regions,
-                    variantOptions
-                  )
+                  prepareProductVarianObj(variant, variantOptions, regions)
                 );
               })
             );
