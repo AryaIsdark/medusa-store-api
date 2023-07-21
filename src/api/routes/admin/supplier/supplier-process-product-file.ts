@@ -1,7 +1,6 @@
 import { Response } from "express";
 import multer from "multer";
 import ExcelJS from "exceljs";
-// import { Supplier } from "models/supplier";
 
 const getNonFlatKeys = (obj) => {
   const nonFlatKeys = [];
@@ -57,33 +56,24 @@ export const processExcelFile = async (file) => {
 
   // Define the column name mapping
   const columnNameMapping = {
-    Reference: "reference",
-    "Combination Reference": "combinationReference",
-    EAN13: "ean13",
-    "Combination EAN13": "combinationEan13",
-    "Combination Price": "combinationPrice",
-    Price: "price",
-    "Product Name": "productName",
-    "Attribute Group: Variationer": "attributeGroup",
-    "Cost Pirce": "costPrice",
-    "Combination Cost Price": "combinationcostPrice",
-    Quantity: "quantity",
-    Weight: "weight",
-    product_type: "product_type",
-    Category: "category",
     Brand: "brand",
-    Supplier: "supplier",
-    "Product Images": "productImages",
-    // SKU: "sku",
-    // EAN: "ean",
-    // "Expiry Date": "expiryDate",
-    // "Country Of Origin": "countryOfOrigin",
-    // "Product Url": "productUrl",
-    // "Image Url": "imageUrl",
+    Product: "productName",
+    RRP: "rrp",
+    "Wholesale Price With Your Discount": "wholeSalePriceWithYourDiscount",
+    "Wholesale Price": "wholeSalePrice",
+    Promo: "promo",
+    "Mega Deal Price": "megaDealPrice",
+    Weight: "weight",
+    SKU: "sku",
+    EAN: "ean",
+    "Expiry Date": "expiryDate",
+    "Country Of Origin": "countryOfOrigin",
+    "Product Url": "productUrl",
+    "Image Url": "imageUrl",
   };
 
   // Process each row
-  worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     const rowData = {};
     // Process each cell in the row
     row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -107,37 +97,21 @@ export const processExcelFile = async (file) => {
     } else {
       // Push product object to the productsArray
       const product = {
-        // brand: row.brand,
-        // product: row.product,
-        // rpr: row.rrp || 0,
-        // wholeSalePriceWithYourDiscount: row.wholeSalePriceWithYourDiscount || 0,
-        // wholeSalePrice: row.wholeSalePrice || 0,
-        // promo: row.promo || 0,
-        // megaDealPrice: row.megaDealPrice || 0,
-        // weight: row.weight || 0,
-        // sku: row.sku,
-        // ean: row.ean,
-        // expiryDate: row.expiryDate,
-        // countryOfOrigin: row.countryOfOrigin || "N/A",
-        // productUrl: row.productUrl || "N/A",
-        // imageUrl: row.imageUrl || "N/A",
-        reference: row.reference,
-        combinationReference: row.combinationReference,
-        ean13: row.ean13,
-        combinationEan13: row.combinationEan13,
-        combinationPrice: parseInt(row.combinationPrice, 10) || 10,
-        price: parseInt(row.price, 10) || 0,
-        productName: row.productName,
-        costPrice: parseInt(row.costPrice, 10) || 10,
-        combinationcostPrice: parseInt(row.combinationcostPrice, 10) || 10,
-        quantity: row.quantity,
-        weight: parseInt(row.weight, 10) || 10,
-        product_type: row.product_type,
-        category: row.category,
         brand: row.brand,
-        supplier: row.supplier,
-        productImages: row.productImages,
-        attributeGroup: row.attributeGroup,
+        productName: row.productName,
+        rpr: row.rrp || 0,
+        wholeSalePriceWithYourDiscount: row.wholeSalePriceWithYourDiscount || 0,
+        wholeSalePrice: row.wholeSalePrice || 0,
+        promo: row.promo || 0,
+        megaDealPrice: row.megaDealPrice || 0,
+        weight: row.weight || 0,
+        reference: row.sku,
+        sku: row.sku,
+        ean: row.ean,
+        expiryDate: row.expiryDate,
+        countryOfOrigin: row.countryOfOrigin || "N/A",
+        productUrl: row.productUrl || "N/A",
+        imageUrl: row.imageUrl || "N/A",
       };
 
       productsArray.push(product);
