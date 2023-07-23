@@ -13,6 +13,9 @@ export class SupplierProduct extends BaseEntity {
   @Column({ type: "varchar", nullable: true })
   ean: string;
 
+  @Column({ type: "varchar", nullable: true })
+  sku: string;
+
   @Column({ type: "decimal", nullable: true })
   price: number;
 
@@ -32,7 +35,40 @@ export class SupplierProduct extends BaseEntity {
   brand: string;
 
   @Column({ type: "varchar", nullable: true })
-  productImages: string;
+  imageUrl: string;
+
+  @Column({ type: "varchar", nullable: true })
+  expiryDate: string;
+
+  @Column({ type: "decimal", nullable: true })
+  promo: number;
+
+  @Column({ type: "decimal", nullable: true })
+  wholeSalePriceWithYourDiscount: number;
+
+  @Column({ type: "decimal", nullable: true })
+  wholeSalePrice: number;
+
+  @Column({ type: "decimal", nullable: true })
+  rpr: number;
+
+  @Column({ type: "varchar", nullable: true })
+  mainProductName: string;
+
+  @Column({ type: "varchar", nullable: true })
+  variantName: string;
+
+  @Column({ type: "boolean", default: false })
+  isVariant: boolean;
+
+  @Column({ type: "boolean", default: false })
+  hasVariants: boolean;
+
+  @Column({ type: "varchar", nullable: true })
+  parentId: string;
+
+  @Column({ type: "boolean", nullable: false })
+  isCreatedInStore: boolean;
 
   @BeforeInsert()
   private beforeInsert(): void {

@@ -1,13 +1,8 @@
 import { CreateProductVariantInput } from "@medusajs/medusa/dist/types/product-variant";
 import { CreateProductInput } from "@medusajs/medusa/dist/types/product";
-import {
-  ProductStatus,
-  ProductVariant,
-  MoneyAmount,
-  ProductVariantService,
-  ProductService,
-} from "@medusajs/medusa";
+import { ProductStatus } from "@medusajs/medusa";
 import cloudinary from "cloudinary";
+import { SupplierProduct } from "models/supplier-product";
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -55,19 +50,18 @@ export const getImages = (variants) =>
   });
 
 export const prepareProductVarianObj = (
-  obj: any,
-  product: any,
-  regions: any,
+  obj: SupplierProduct,
   variantOptions: any
 ): CreateProductVariantInput => {
   return {
     title: obj.productName,
-    sku: obj.combinationReference ?? obj.reference,
-    barcode: obj.combinationEan13 ?? obj.ean13,
-    ean: obj.combinationEan13 ?? obj.ean13,
-    upc: obj.combinationEan13 ?? obj.ean13,
-    inventory_quantity: 100,
+    sku: obj.sku,
+    barcode: obj.ean,
+    ean: obj.ean,
+    upc: obj.ean,
+    inventory_quantity: obj.quantity ?? 100,
     options: variantOptions,
+    metadata: { parentId: obj.parentId, images: [obj.imageUrl] },
     prices: [],
   };
 };
