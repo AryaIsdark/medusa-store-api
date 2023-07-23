@@ -98,7 +98,6 @@ class SyncProductsService extends TransactionBaseService {
             defaultSalesChannel
           )
         );
-        console.log("new product added", newProduct);
         if (newProduct.id) {
           await Promise.all(
             supplierProducts.map(async (supplierProduct) => {
@@ -106,19 +105,14 @@ class SyncProductsService extends TransactionBaseService {
                 option_id: v.id,
                 value: supplierProduct.productName,
               }));
-
-              console.log("variant options", variantOptions);
               try {
                 const newVariant: ProductVariant =
                   await this.productVariantService.create(
                     newProduct.id,
                     prepareProductVarianObj(supplierProduct, variantOptions)
                   );
-
-                console.log("newVariant", newVariant);
                 if (newVariant.id) {
                   try {
-                    console.log("I was called ");
                     await this.supplierProductService.update(
                       supplierProduct.id,
                       {
