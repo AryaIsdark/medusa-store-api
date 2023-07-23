@@ -103,6 +103,27 @@ class SupplierProductService extends TransactionBaseService {
     );
     return supplierRepo.find();
   }
+
+  async findByReference(reference: string) {
+    const supplierRepo = this.manager_.withRepository(
+      this.supplierProductRepository
+    );
+    return supplierRepo.findOne({ where: { reference } });
+  }
+
+  async findByParentId(parentId: string) {
+    const supplierRepo = this.manager_.withRepository(
+      this.supplierProductRepository
+    );
+    return supplierRepo.find({ where: { parentId } });
+  }
+
+  async search(query) {
+    const supplierRepo = this.manager_.withRepository(
+      this.supplierProductRepository
+    );
+    return supplierRepo.find({ where: query });
+  }
 }
 
 export default SupplierProductService;

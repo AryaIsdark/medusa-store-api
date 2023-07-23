@@ -1,6 +1,15 @@
 import { Response } from "express";
 import multer from "multer";
-import ExcelJS from "exceljs";
+import XLSX from "xlsx";
+import crypto from "crypto";
+
+// Helper function to extract the integer value from the "QTY" property
+const extractQuantity = (qty) => {
+  // Use regular expression to remove non-numeric characters
+  const numericValue = qty.replace(/\D/g, "");
+  // Parse the numeric value as an integer
+  return parseInt(numericValue, 10);
+};
 
 const getNonFlatKeys = (obj) => {
   const nonFlatKeys = [];
@@ -31,99 +40,92 @@ const validateRow = (row) => {
   }
 };
 
+const columnNameMapping = {
+  Brand: "brand",
+  Product: "productName",
+  rpr: "rpr",
+  QTY: "quantity",
+  "Wholesale Price With Your Discount": "wholeSalePriceWithYourDiscount",
+  "Wholesale Price": "wholeSalePrice",
+  Promo: "promo",
+  "Mega Deal Price": "megaDealPrice",
+  Weight: "weight",
+  SKU: "sku",
+  EAN: "ean",
+  "Expiry Date": "expiryDate",
+  "Country Of Origin": "countryOfOrigin",
+  "Product Url": "productUrl",
+  "Image Url": "imageUrl",
+  main_product_name: "mainProductName",
+  variant_name: "variantName",
+  is_variant: "isVariant",
+  has_variants: "hasVariants",
+  parent_id: "parentId",
+};
+
 export const processExcelFile = async (file) => {
-  let validationErrors = [];
-
-  const workbook = new ExcelJS.Workbook();
-
   // Load the workbook
-  await workbook.xlsx.readFile(file);
+  let workbook = XLSX.readFile(file);
 
   // Get the first sheet
-  const worksheet = workbook.getWorksheet(1);
+  let worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-  // Get the header row
-  const headerRow = worksheet.getRow(1);
-  const headers = [];
+  // Convert the sheet to JSON
+  let data = XLSX.utils.sheet_to_json(worksheet);
 
-  // Extract the header names
-  headerRow.eachCell({ includeEmpty: true }, (cell) => {
-    headers.push(cell.value);
-  });
+  // Process the data
+  data.forEach((row) => {
+    // Split the product name into main_product_name and variant_name
+    let parts = row["Product"].split(",");
+    row["main_product_name"] = parts[0].trim();
+    row["variant_name"] = parts.length > 1 ? parts[1].trim() : "";
 
-  // Define an array to store the row data
-  const rows = [];
+    // Determine if the row is a variant
+    row["is_variant"] = row["variant_name"] !== "";
 
-  // Define the column name mapping
-  const columnNameMapping = {
-    Brand: "brand",
-    Product: "productName",
-    RRP: "rrp",
-    "Wholesale Price With Your Discount": "wholeSalePriceWithYourDiscount",
-    "Wholesale Price": "wholeSalePrice",
-    Promo: "promo",
-    "Mega Deal Price": "megaDealPrice",
-    Weight: "weight",
-    SKU: "sku",
-    EAN: "ean",
-    "Expiry Date": "expiryDate",
-    "Country Of Origin": "countryOfOrigin",
-    "Product Url": "productUrl",
-    "Image Url": "imageUrl",
-  };
-
-  // Process each row
-  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-    const rowData = {};
-    // Process each cell in the row
-    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-      const header = headers[colNumber - 1];
-      const propertyName = columnNameMapping[header];
-      if (propertyName) {
-        rowData[propertyName] = cell.value;
-      }
-    });
-
-    // Push row data to the array
-    rows.push(rowData);
-  });
-
-  const productsArray = []; // Define the array to store the products
-  rows.forEach((row) => {
-    const rowValidationErrors = validateRow(row);
-
-    if (rowValidationErrors?.errors.length) {
-      validationErrors.push(rowValidationErrors);
+    // Generate a parent_id for each row
+    if (row["is_variant"]) {
+      let hash = crypto.createHash("sha1");
+      hash.update(row["Brand"] + row["main_product_name"]);
+      row["parent_id"] =
+        "PP" + hash.digest("hex").substring(0, 14).toUpperCase();
     } else {
-      // Push product object to the productsArray
-      const product = {
-        brand: row.brand,
-        productName: row.productName,
-        rpr: row.rrp || 0,
-        wholeSalePriceWithYourDiscount: row.wholeSalePriceWithYourDiscount || 0,
-        wholeSalePrice: row.wholeSalePrice || 0,
-        promo: row.promo || 0,
-        megaDealPrice: row.megaDealPrice || 0,
-        weight: row.weight || 0,
-        reference: row.sku,
-        sku: row.sku,
-        ean: row.ean,
-        expiryDate: row.expiryDate,
-        countryOfOrigin: row.countryOfOrigin || "N/A",
-        productUrl: row.productUrl || "N/A",
-        imageUrl: row.imageUrl || "N/A",
-      };
+      row["parent_id"] = row["SKU"];
+    }
 
-      productsArray.push(product);
+    // Extract the integer value from the "QTY" property
+    row["quantity"] = extractQuantity(row["QTY"]);
+  });
+
+  // Count the number of variants for each parent_id
+  let variantCounts = data.reduce((counts, row) => {
+    if (row["is_variant"]) {
+      counts[row["parent_id"]] = (counts[row["parent_id"]] || 0) + 1;
+    }
+    return counts;
+  }, {});
+
+  // Generate the main product name for products that have variants
+  data.forEach((row) => {
+    row["has_variants"] =
+      row["is_variant"] && variantCounts[row["parent_id"]] > 1;
+    if (row["has_variants"]) {
+      row["main_product_name"] =
+        row["Brand"] + " - " + row["main_product_name"];
     }
   });
 
-  if (validationErrors.length) {
-    throw validationErrors;
-  }
+  // Map the data properties based on the columnNameMapping
+  const mappedData = data.map((row) => {
+    const mappedRow = {};
+    for (const key in row as any) {
+      const mappedKey = columnNameMapping[key] || key;
+      mappedRow[mappedKey] = row[key];
+    }
+    return mappedRow;
+  });
 
-  // Return the list of product objects
-  return productsArray.slice(1, productsArray.length);
+  return mappedData;
 };
 
 const upload = multer({ dest: "uploads/" }).single("file");
