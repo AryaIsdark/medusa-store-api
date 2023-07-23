@@ -2,12 +2,9 @@ import {
   TransactionBaseService,
   ProductVariantService,
   ProductService,
-  ProductVariant,
-  Product,
   ShippingProfileService,
   SalesChannelService,
-  ShippingProfile,
-  SalesChannel,
+  ProductVariant,
 } from "@medusajs/medusa";
 import SupplierProductService from "./supplier-product";
 import { SupplierProduct } from "models/supplier-product";
@@ -15,16 +12,6 @@ import {
   prepareProductObj,
   prepareProductVarianObj,
 } from "../api/routes/admin/products/helpers/helpers";
-import { groupProductsByVariants } from "../api/routes/admin/supplier/get-variants";
-
-type ExtendedSupplierProduct = SupplierProduct & {
-  parentProduct: Product;
-};
-
-type CreateProductAndVariantInput = {
-  product: SupplierProduct;
-  variants: SupplierProduct[];
-};
 
 class SyncProductsService extends TransactionBaseService {
   private supplierProductService: SupplierProductService;
@@ -66,51 +53,6 @@ class SyncProductsService extends TransactionBaseService {
       if (parentId) {
         const variants = await this.supplierProductService.findByParentId(
           parentId
-        );
-      }
-    }
-  }
-
-  async createProductTask() {
-    const [defaulShippingProfile, defaultSalesChannel] = await Promise.all([
-      this.defaulShippingProfilePromise,
-      this.defaultSalesChannelPromise,
-    ]);
-
-    const supplierProducts = await this.supplierProductService.list();
-
-    for (const supplierProduct of supplierProducts) {
-      try {
-        const newProduct = await this.productService.create(
-          prepareProductObj(
-            supplierProduct,
-            null,
-            defaulShippingProfile,
-            defaultSalesChannel
-          )
-        );
-
-        if (newProduct.id) {
-          const variantOptions = newProduct.options.map((v) => ({
-            option_id: v.id,
-            value: supplierProduct.productName,
-          }));
-          try {
-            await this.productVariantService.create(
-              newProduct.id,
-              prepareProductVarianObj(supplierProduct, variantOptions)
-            );
-          } catch (e) {
-            console.log(
-              `something went wrong when trying to create variant ${supplierProduct.reference} - ${supplierProduct.productName}`,
-              e
-            );
-          }
-        }
-      } catch (e) {
-        console.log(
-          `something went wrong when trying to create product ${supplierProduct.sku} - ${supplierProduct.productName}`,
-          e
         );
       }
     }
@@ -159,21 +101,41 @@ class SyncProductsService extends TransactionBaseService {
         console.log("new product added", newProduct);
         if (newProduct.id) {
           await Promise.all(
-            supplierProducts.map(async (variant) => {
+            supplierProducts.map(async (supplierProduct) => {
               const variantOptions = newProduct.options.map((v) => ({
                 option_id: v.id,
-                value: variant.productName,
+                value: supplierProduct.productName,
               }));
 
               console.log("variant options", variantOptions);
               try {
-                await this.productVariantService.create(
-                  newProduct.id,
-                  prepareProductVarianObj(variant, variantOptions)
-                );
+                const newVariant: ProductVariant =
+                  await this.productVariantService.create(
+                    newProduct.id,
+                    prepareProductVarianObj(supplierProduct, variantOptions)
+                  );
+
+                console.log("newVariant", newVariant);
+                if (newVariant.id) {
+                  try {
+                    console.log("I was called ");
+                    await this.supplierProductService.update(
+                      supplierProduct.id,
+                      {
+                        isCreatedInStore: true,
+                      }
+                    );
+                  } catch (e) {
+                    console.log(
+                      "something went wrong when trying to update supplier product with id:",
+                      supplierProduct.id,
+                      e
+                    );
+                  }
+                }
               } catch (e) {
                 console.log(
-                  `something went wrong when trying to create variant ${variant.sku} - ${variant.productName}`,
+                  `something went wrong when trying to create variant ${supplierProduct.reference} - ${supplierProduct.productName}`,
                   e
                 );
               }
@@ -194,9 +156,7 @@ class SyncProductsService extends TransactionBaseService {
       isCreatedInStore: false,
     });
 
-    const grouppedProducts = this.groupProductsByParentId(
-      supplierProducts.slice(0, 50)
-    );
+    const grouppedProducts = this.groupProductsByParentId(supplierProducts);
 
     const batchSize = 1; // Set the desired batch size
     const totalProducts = grouppedProducts.length;

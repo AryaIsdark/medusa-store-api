@@ -1,5 +1,6 @@
 import { TransactionBaseService } from "@medusajs/medusa";
 import SupplierProductRepository from "../repositories/supplier-product";
+import { SupplierProduct } from "models/supplier-product";
 
 class SupplierProductService extends TransactionBaseService {
   protected readonly supplierProductRepository: typeof SupplierProductRepository;
@@ -74,11 +75,11 @@ class SupplierProductService extends TransactionBaseService {
     return supplierRepo.findOne(id);
   }
 
-  async update(id, data) {
+  async update(id, data: Partial<SupplierProduct>) {
     const supplierRepo = this.manager_.withRepository(
       this.supplierProductRepository
     );
-    const supplier = await supplierRepo.findOne(id);
+    const supplier = await supplierRepo.findOne({ where: { id } });
     if (!supplier) {
       throw new Error("Supplier not found");
     }
