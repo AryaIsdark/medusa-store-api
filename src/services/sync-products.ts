@@ -91,11 +91,25 @@ class SyncProductsService extends TransactionBaseService {
     );
   }
 
-  private async addNewProductWithVariants(supplierProducts: SupplierProduct[]) {
+  private async createOrUpdateProductWithVariants(
+    supplierProducts: SupplierProduct[]
+  ) {
     if (supplierProducts.length) {
       const baseProduct = supplierProducts[0];
+      const existingProducts: Product[] = await this.productService.list({
+        q: baseProduct.sku,
+      });
+
+      if (existingProducts[0] && existingProducts[0].id) {
+        await this.createVariantsForProduct(
+          existingProducts[0],
+          supplierProducts
+        );
+        return;
+      }
+
+      const newProduct = await this.createProduct(baseProduct);
       try {
-        const newProduct = await this.createProduct(baseProduct);
         if (newProduct.id) {
           await this.createVariantsForProduct(newProduct, supplierProducts);
         }
@@ -109,19 +123,27 @@ class SyncProductsService extends TransactionBaseService {
   }
 
   private async createVariantsForProduct(
-    newProduct: Product,
+    product: Product,
     supplierProducts: SupplierProduct[]
   ) {
+    const productOption = await this.productService.retrieveOptionByTitle(
+      "variation",
+      product.id
+    );
+
     await Promise.all(
       supplierProducts.map(async (supplierProduct) => {
-        const variantOptions = newProduct.options.map((v) => ({
-          option_id: v.id,
-          value: supplierProduct.productName,
-        }));
+        const variantOptions = [
+          {
+            option_id: productOption.id,
+            value: supplierProduct.productName,
+          },
+        ];
+
         try {
           const newVariant: ProductVariant =
             await this.productVariantService.create(
-              newProduct.id,
+              product.id,
               prepareProductVarianObj(supplierProduct, variantOptions)
             );
           if (newVariant.id) {
@@ -129,7 +151,7 @@ class SyncProductsService extends TransactionBaseService {
           }
         } catch (e) {
           console.log(
-            `something went wrong when trying to create variant ${supplierProduct.reference} - ${supplierProduct.productName}`,
+            `something went wrong when trying to create variant ${supplierProduct.sku} - ${supplierProduct.productName}`,
             e
           );
         }
@@ -138,9 +160,7 @@ class SyncProductsService extends TransactionBaseService {
   }
 
   async beginSync() {
-    const supplierProducts = await this.supplierProductService.search({
-      isCreatedInStore: false,
-    });
+    const supplierProducts = await this.supplierProductService.list();
 
     const grouppedProducts = this.groupProductsByParentId(supplierProducts);
 
@@ -157,7 +177,7 @@ class SyncProductsService extends TransactionBaseService {
       await Promise.all(
         batch.map(async (product) => {
           const productVariants = product.variants;
-          await this.addNewProductWithVariants(productVariants);
+          await this.createOrUpdateProductWithVariants(productVariants);
         })
       );
 
