@@ -18,11 +18,17 @@ class SupplierProductService extends TransactionBaseService {
     const supplierRepo = this.manager_.withRepository(
       this.supplierProductRepository
     );
-    data.forEach((d) => {
-      const newSupplier = supplierRepo.create(d);
-      supplierRepo.save(newSupplier);
-      success.push(d);
-    });
+    Promise.all(
+      data.forEach(async (d) => {
+        try {
+          const newSupplier = await this.create(d);
+          supplierRepo.save(newSupplier);
+          success.push(d);
+        } catch (error) {
+          fail.push(error);
+        }
+      })
+    );
 
     return success;
   }
@@ -61,6 +67,10 @@ class SupplierProductService extends TransactionBaseService {
   }
 
   async create(data) {
+    const existingProducts = await this.search({ sku: data.sku });
+    if (existingProducts.length) {
+      throw new Error("Product with given SKU already exists");
+    }
     const supplierRepo = this.manager_.withRepository(
       this.supplierProductRepository
     );
@@ -119,7 +129,7 @@ class SupplierProductService extends TransactionBaseService {
     return supplierRepo.find({ where: { parentId } });
   }
 
-  async search(query) {
+  async search(query: Partial<SupplierProduct>) {
     const supplierRepo = this.manager_.withRepository(
       this.supplierProductRepository
     );
