@@ -13,6 +13,19 @@ import {
   prepareProductObj,
   prepareProductVarianObj,
 } from "../api/routes/admin/products/helpers/helpers";
+import { UpdateProductVariantInput } from "@medusajs/medusa/dist/types/product-variant";
+import {
+  UpdateProductInput,
+  FindProductConfig,
+} from "@medusajs/medusa/dist/types/product";
+import cloudinary from "cloudinary";
+
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
 class SyncProductsService extends TransactionBaseService {
   private supplierProductService: SupplierProductService;
@@ -109,9 +122,12 @@ class SyncProductsService extends TransactionBaseService {
       }
 
       const newProduct = await this.createProduct(baseProduct);
+      const variants = supplierProducts.filter(
+        (item) => item.isCreatedInStore === false
+      );
       try {
-        if (newProduct.id) {
-          await this.createVariantsForProduct(newProduct, supplierProducts);
+        if (newProduct.id && variants.length) {
+          await this.createVariantsForProduct(newProduct, variants);
         }
       } catch (e) {
         console.log(
@@ -159,10 +175,168 @@ class SyncProductsService extends TransactionBaseService {
     );
   }
 
-  async beginSync() {
-    const supplierProducts = await this.supplierProductService.list();
+  async updateExistingProducts(supplierProducts: SupplierProduct[]) {
+    await Promise.all(
+      supplierProducts.map(async (supplierProduct) => {
+        console.log("I was ran for product:", supplierProduct.sku);
+        const variants: ProductVariant[] =
+          await this.productVariantService.list({
+            sku: supplierProduct.sku,
+          });
+        if (variants[0].id) {
+          try {
+            const updateData: UpdateProductVariantInput = {
+              inventory_quantity: supplierProduct.quantity,
+            };
+            const variantData = { variant: variants[0], updateData };
+            await this.productVariantService.update([variantData]);
+          } catch (e) {
+            console.log(
+              `something went wrong while updating ${variants[0].sku} - ${variants[0].title}`,
+              e
+            );
+          }
+        }
+      })
+    );
+  }
 
-    const grouppedProducts = this.groupProductsByParentId(supplierProducts);
+  async findParentProductByVariant(productVariant: ProductVariant) {
+    const config: FindProductConfig = {
+      relations: ["image"],
+    };
+    return await this.productService.retrieve(
+      productVariant.product_id,
+      config
+    );
+  }
+
+  async findRelatedProductVariantBySupplierProduct(supplierProduct) {
+    const variants: ProductVariant[] = await this.productVariantService.list({
+      sku: supplierProduct.sku,
+    });
+    return variants[0];
+  }
+
+  async updateProductVariant(
+    variant: ProductVariant,
+    updateData: UpdateProductVariantInput
+  ) {
+    try {
+      const variantData = { variant, updateData };
+      await this.productVariantService.update([variantData]);
+    } catch (e) {
+      console.log(
+        `something went wrong when trying to update variant: ${variant.id}`,
+        e
+      );
+    }
+  }
+
+  async upateProductVariantImages(uploadResults) {
+    Promise.all(
+      uploadResults.map(async (uploadResult) => {
+        const supplierProduct = uploadResult.supplierProduct;
+        const imageUrl = uploadResult.image.secure_url;
+        const productVariant =
+          await this.findRelatedProductVariantBySupplierProduct(
+            supplierProduct
+          );
+        console.log(productVariant);
+        const existingImages: string[] = productVariant.metadata
+          ?.syncedImages as string[];
+        await this.updateProductVariant(productVariant, {
+          metadata: { syncedImages: [...existingImages, imageUrl] },
+        });
+      })
+    );
+  }
+
+  async uploadImages(supplierProducts) {
+    const uploadResults = [];
+    await Promise.all(
+      supplierProducts.map((supplierProduct) => {
+        const imageUrl = supplierProduct.imageUrl;
+        cloudinary.v2.uploader
+          .upload(imageUrl, {
+            public_id: `medusa/${supplierProduct.sku}/${supplierProduct.ean}`,
+            overwrite: false,
+          })
+          .catch((e) => {
+            throw e;
+          })
+          .then((image) => {
+            console.log(image);
+            uploadResults.push({ supplierProduct, image });
+          });
+      })
+    );
+
+    return uploadResults;
+  }
+
+  async getProductVariantImage(productVariant: ProductVariant) {
+    const public_id = `medusa/${productVariant.sku}/${productVariant.ean}`;
+    return await cloudinary.v2.api.resource(public_id);
+  }
+
+  async beginSyncImages() {
+    const productVariants: ProductVariant[] =
+      await this.productVariantService.list({});
+    Promise.all(
+      productVariants.map(async (productVariant) => {
+        const image = await this.getProductVariantImage(productVariant);
+        console.log(image);
+        if (image) {
+          await this.updateProductVariant(productVariant, {
+            metadata: { storeImages: [image] },
+          });
+          const parentProduct = await this.findParentProductByVariant(
+            productVariant
+          );
+          console.log(parentProduct.images);
+          if (parentProduct) {
+            const data: UpdateProductInput = {
+              images: [image.secure_url],
+            };
+            await this.productService.update(parentProduct.id, data);
+          }
+        }
+      })
+    );
+  }
+
+  async beginSyncUploadImages() {
+    // await cloudinary.v2.api.delete_all_resources();
+    const supplierProducts = await this.supplierProductService.list();
+    try {
+      const uploadResult = await this.uploadImages(supplierProducts);
+      if (uploadResult.length) {
+        await this.upateProductVariantImages(uploadResult);
+      }
+    } catch (e) {
+      console.log("something went wrong when trying to upload image", e);
+    }
+  }
+
+  async beginUpdateSync() {
+    const supplierProducts = await this.supplierProductService.search({
+      isCreatedInStore: true,
+    });
+
+    if (supplierProducts.length) {
+      try {
+        await this.updateExistingProducts(supplierProducts);
+      } catch (e) {
+        console.log("something went wrong while updating products", e);
+      }
+    }
+  }
+
+  async beginCreateSync() {
+    const newSupplierProducts = await this.supplierProductService.list();
+
+    const grouppedProducts = this.groupProductsByParentId(newSupplierProducts);
 
     const batchSize = 1; // Set the desired batch size
     const totalProducts = grouppedProducts.length;
