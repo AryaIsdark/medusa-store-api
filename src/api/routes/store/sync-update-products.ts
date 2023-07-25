@@ -4,7 +4,7 @@ export default async (req: Request, res: Response): Promise<void> => {
   const syncProductsService = req.scope.resolve("syncProductsService");
 
   try {
-    const data = await syncProductsService.beginCreateSync();
+    const data = await syncProductsService.beginUpdateSync();
     res.json({
       status: 200,
       message: "syncing finished succesfully",

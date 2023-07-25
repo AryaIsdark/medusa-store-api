@@ -18,14 +18,27 @@ class SupplierProductService extends TransactionBaseService {
     const supplierRepo = this.manager_.withRepository(
       this.supplierProductRepository
     );
+
     Promise.all(
-      data.forEach(async (d) => {
-        try {
-          const newSupplier = await this.create(d);
-          supplierRepo.save(newSupplier);
-          success.push(d);
-        } catch (error) {
-          fail.push(error);
+      data.forEach(async (d: SupplierProduct) => {
+        console.log("sku", d.sku, d.sku.length);
+        const existing = await this.search({ sku: d.sku });
+        console.log("existing", existing);
+        if (existing[0] && existing[0].id) {
+          try {
+            await this.update(existing[0].id, d);
+            success.push(d);
+          } catch (error) {
+            fail.push(error);
+          }
+        } else {
+          try {
+            const newSupplier = await this.create(d);
+            supplierRepo.save(newSupplier);
+            success.push(d);
+          } catch (error) {
+            fail.push(error);
+          }
         }
       })
     );
