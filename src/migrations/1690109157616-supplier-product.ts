@@ -3,14 +3,7 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class SupplierProduct1690109157616 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `DELETE FROM public.product_option_value;
-      DELETE FROM public.product_option;
-      DELETE FROM public.line_item_tax_line;
-      DELETE FROM public.line_item;
-      DELETE FROM public.product_variant;
-      DELETE FROM public.product;
-      DROP TABLE IF EXISTS "supplier_product";
-      CREATE TABLE IF NOT EXISTS "supplier_product" (
+      `CREATE TABLE IF NOT EXISTS "supplier_product" (
         "id" character varying NOT NULL,
         "reference" VARCHAR,
         "supplierId" VARCHAR,

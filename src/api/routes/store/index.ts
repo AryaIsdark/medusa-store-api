@@ -9,6 +9,7 @@ import syncProductsV2 from "./sync-products-v2";
 import syncUpdateProducts from "./sync-update-products";
 import syncUploadProductImages from "./sync-upload-product-images";
 import syncProductImages from "./sync-product-images";
+import resetDb from "./reset-db";
 
 // Initialize a custom router
 const router = Router();
@@ -32,4 +33,5 @@ export function attachStoreRoutes(storeRouter: Router) {
     wrapHandler(syncUploadProductImages)
   );
   router.get("/sync-product-images", wrapHandler(syncProductImages));
+  router.get("/reset-db", wrapHandler(resetDb));
 }
