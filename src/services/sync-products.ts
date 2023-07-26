@@ -205,10 +205,7 @@ class SyncProductsService extends TransactionBaseService {
     const config: FindProductConfig = {
       relations: ["image"],
     };
-    return await this.productService.retrieve(
-      productVariant.product_id,
-      config
-    );
+    return await this.productService.retrieve(productVariant.product_id);
   }
 
   async findRelatedProductVariantBySupplierProduct(supplierProduct) {
