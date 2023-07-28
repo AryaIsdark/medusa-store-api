@@ -246,11 +246,11 @@ class SyncProductsService extends TransactionBaseService {
           await this.findRelatedProductVariantBySupplierProduct(
             supplierProduct
           );
-        console.log(productVariant);
-        const existingImages: string[] = productVariant.metadata
-          ?.syncedImages as string[];
+        console.log("productVariant - sync-product.ts:249", productVariant);
+        // const existingImages: string[] = productVariant.metadata
+        //   ?.syncedImages as string[];
         await this.updateProductVariant(productVariant, {
-          metadata: { syncedImages: [...existingImages, imageUrl] },
+          metadata: { syncedImages: [imageUrl] },
         });
       })
     );
@@ -290,7 +290,7 @@ class SyncProductsService extends TransactionBaseService {
     Promise.all(
       productVariants.map(async (productVariant) => {
         const image = await this.getProductVariantImage(productVariant);
-        console.log(image);
+        console.log("sync-product.ts:293", image);
         if (image) {
           await this.updateProductVariant(productVariant, {
             metadata: { storeImages: [image] },
@@ -298,7 +298,7 @@ class SyncProductsService extends TransactionBaseService {
           const parentProduct = await this.findParentProductByVariant(
             productVariant
           );
-          console.log(parentProduct.images);
+          console.log("sync-product.ts:301", parentProduct);
           if (parentProduct) {
             const data: UpdateProductInput = {
               images: [image.secure_url],
@@ -316,7 +316,14 @@ class SyncProductsService extends TransactionBaseService {
     try {
       const uploadResult = await this.uploadImages(supplierProducts);
       if (uploadResult.length) {
-        await this.upateProductVariantImages(uploadResult);
+        try {
+          await this.upateProductVariantImages(uploadResult);
+        } catch (e) {
+          console.log(
+            "something went wrong when trying to update varian after image upload",
+            e
+          );
+        }
       }
     } catch (e) {
       console.log("something went wrong when trying to upload image", e);
