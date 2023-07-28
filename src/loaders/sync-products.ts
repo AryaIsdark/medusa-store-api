@@ -11,12 +11,10 @@ const syncProductsJob = async (
     "* * * * *",
     async () => {
       // job to execute
-      const supplierProductsService = container.resolve(
-        "supplierProductsService"
-      );
-      await supplierProductsService.beginCreateSync();
-      await supplierProductsService.beginSyncUploadImages();
-      await supplierProductsService.beginSyncImages();
+      const syncProductsService = container.resolve("syncProductsService");
+      await syncProductsService.beginCreateSync();
+      await syncProductsService.beginSyncUploadImages();
+      await syncProductsService.beginSyncImages();
     }
   );
 };
