@@ -1,6 +1,9 @@
-import { CreateProductVariantInput } from "@medusajs/medusa/dist/types/product-variant";
+import {
+  CreateProductVariantInput,
+  ProductVariantPrice,
+} from "@medusajs/medusa/dist/types/product-variant";
 import { CreateProductInput } from "@medusajs/medusa/dist/types/product";
-import { ProductStatus } from "@medusajs/medusa";
+import { ProductStatus, Region } from "@medusajs/medusa";
 import cloudinary from "cloudinary";
 import { SupplierProduct } from "models/supplier-product";
 
@@ -10,6 +13,10 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
+
+const exchangeRates = {
+  eur_to_sek: 11.52,
+};
 
 export const groupProductsByReference = (products) => {
   let groupedProducts = [];
@@ -49,6 +56,30 @@ export const getImages = (variants) =>
     return [];
   });
 
+const roundToNearestRoundValue = (price: number) => {
+  console.log("price", price);
+  const nonDecimalPart = Math.ceil(price);
+  const decimalPart = 0.9;
+  const roundedValue = nonDecimalPart + decimalPart;
+  return roundedValue;
+};
+
+const trimDecimals = (price: number) => parseFloat(price.toFixed(2));
+
+export const getPrices = (price_in_euro: number): ProductVariantPrice[] => {
+  // 10.53
+  const eur_to_sek_rate = exchangeRates.eur_to_sek; // Medusa works with cents
+  const price_in_sek =
+    roundToNearestRoundValue(trimDecimals(price_in_euro * eur_to_sek_rate)) *
+    100;
+  return [
+    {
+      currency_code: "sek",
+      amount: 100,
+    },
+  ];
+};
+
 export const prepareProductVarianObj = (
   obj: SupplierProduct,
   variantOptions: any
@@ -59,10 +90,10 @@ export const prepareProductVarianObj = (
     barcode: obj.ean,
     ean: obj.ean,
     upc: obj.ean,
-    inventory_quantity: obj.quantity ?? 100,
+    inventory_quantity: obj.quantity ?? 0,
     options: variantOptions,
     metadata: { parentId: obj.parentId, images: [obj.imageUrl] },
-    prices: [],
+    prices: getPrices(obj.wholeSalePrice),
   };
 };
 

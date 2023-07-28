@@ -178,7 +178,6 @@ class SyncProductsService extends TransactionBaseService {
   async updateExistingProducts(supplierProducts: SupplierProduct[]) {
     await Promise.all(
       supplierProducts.map(async (supplierProduct) => {
-        console.log("I was ran for product:", supplierProduct.sku);
         const variants: ProductVariant[] =
           await this.productVariantService.list({
             sku: supplierProduct.sku,
@@ -239,7 +238,6 @@ class SyncProductsService extends TransactionBaseService {
           await this.findRelatedProductVariantBySupplierProduct(
             supplierProduct
           );
-        console.log(productVariant);
         const existingImages: string[] = productVariant.metadata
           ?.syncedImages as string[];
         await this.updateProductVariant(productVariant, {
@@ -283,7 +281,6 @@ class SyncProductsService extends TransactionBaseService {
     Promise.all(
       productVariants.map(async (productVariant) => {
         const image = await this.getProductVariantImage(productVariant);
-        console.log(image);
         if (image) {
           await this.updateProductVariant(productVariant, {
             metadata: { storeImages: [image] },
@@ -291,7 +288,10 @@ class SyncProductsService extends TransactionBaseService {
           const parentProduct = await this.findParentProductByVariant(
             productVariant
           );
-          console.log(parentProduct.images);
+          console.log(
+            `parent product for ${productVariant.sku}`,
+            parentProduct
+          );
           if (parentProduct) {
             const data: UpdateProductInput = {
               images: [image.secure_url],

@@ -20,14 +20,16 @@ export default async (req: Request, res: Response): Promise<void> => {
     // You can now execute queries
     const data = await connection.query(
       `
-      DELETE FROM public.fulfillment_item;
-      DELETE FROM public.fulfillment;
     DELETE FROM public.product_option_value;
     DELETE FROM public.product_option;
     DELETE FROM public.line_item_tax_line;
     DELETE FROM public.line_item;
+    DELETE FROM public.money_amount;
     DELETE FROM public.product_variant;
-    DELETE FROM public.product;`
+    DELETE FROM public.product;    
+    DELETE FROM public.fulfillment_item;
+    DELETE FROM public.fulfillment;
+    `
     );
 
     // Close the connection when you're done
