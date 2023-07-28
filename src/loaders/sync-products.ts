@@ -13,8 +13,6 @@ const syncProductsJob = async (
       // job to execute
       const syncProductsService = container.resolve("syncProductsService");
       await syncProductsService.beginCreateSync();
-      await syncProductsService.beginSyncUploadImages();
-      await syncProductsService.beginSyncImages();
     }
   );
 };

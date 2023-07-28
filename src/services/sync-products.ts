@@ -88,7 +88,7 @@ class SyncProductsService extends TransactionBaseService {
     return groupedProducts;
   }
 
-  private async createProduct(baseProduct: SupplierProduct) {
+  private async createProduct(baseProduct: SupplierProduct, images: string[]) {
     const [defaulShippingProfile, defaultSalesChannel] = await Promise.all([
       this.defaulShippingProfilePromise,
       this.defaultSalesChannelPromise,
@@ -97,7 +97,7 @@ class SyncProductsService extends TransactionBaseService {
     return this.productService.create(
       prepareProductObj(
         baseProduct,
-        [],
+        images,
         defaulShippingProfile,
         defaultSalesChannel
       )
@@ -109,6 +109,9 @@ class SyncProductsService extends TransactionBaseService {
   ) {
     if (supplierProducts.length) {
       const baseProduct = supplierProducts[0];
+      const productImages = supplierProducts.map(
+        (supplierProduct) => supplierProduct.imageUrl
+      );
       const existingProducts: Product[] = await this.productService.list({
         q: baseProduct.sku,
       });
@@ -128,7 +131,7 @@ class SyncProductsService extends TransactionBaseService {
         }
       }
 
-      const newProduct = await this.createProduct(baseProduct);
+      const newProduct = await this.createProduct(baseProduct, productImages);
       const variants = supplierProducts.filter(
         (item) => item.isCreatedInStore === false
       );
@@ -260,6 +263,10 @@ class SyncProductsService extends TransactionBaseService {
     const uploadResults = [];
     await Promise.all(
       supplierProducts.map((supplierProduct) => {
+        const possibleImage = this.getProductVariantImage(supplierProduct);
+        if (possibleImage) {
+          uploadResults.push(possibleImage);
+        }
         const imageUrl = supplierProduct.imageUrl;
         cloudinary.v2.uploader
           .upload(imageUrl, {
@@ -313,6 +320,7 @@ class SyncProductsService extends TransactionBaseService {
   async beginSyncUploadImages() {
     // await cloudinary.v2.api.delete_all_resources();
     const supplierProducts = await this.supplierProductService.list();
+
     try {
       const uploadResult = await this.uploadImages(supplierProducts);
       if (uploadResult.length) {
