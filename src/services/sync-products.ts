@@ -354,8 +354,12 @@ class SyncProductsService extends TransactionBaseService {
 
       await Promise.all(
         batch.map(async (product) => {
-          const productVariants = product.variants;
-          await this.createOrUpdateProductWithVariants(productVariants);
+          try {
+            const productVariants = product.variants;
+            await this.createOrUpdateProductWithVariants(productVariants);
+          } catch (e) {
+            console.log("an error occured while processing syncing", e);
+          }
         })
       );
 
