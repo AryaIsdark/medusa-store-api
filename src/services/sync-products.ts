@@ -339,31 +339,37 @@ class SyncProductsService extends TransactionBaseService {
 
   async beginCreateSync() {
     const newSupplierProducts = await this.supplierProductService.list();
+    const hasNewProducts = newSupplierProducts.some(
+      (item) => item.isCreatedInStore === false
+    );
 
-    const grouppedProducts = this.groupProductsByParentId(newSupplierProducts);
+    if (hasNewProducts) {
+      const grouppedProducts =
+        this.groupProductsByParentId(newSupplierProducts);
 
-    const batchSize = 1; // Set the desired batch size
-    const totalProducts = grouppedProducts.length;
-    let processedProducts = 0;
+      const batchSize = 1; // Set the desired batch size
+      const totalProducts = grouppedProducts.length;
+      let processedProducts = 0;
 
-    while (processedProducts < totalProducts) {
-      const batch = grouppedProducts.slice(
-        processedProducts,
-        processedProducts + batchSize
-      );
+      while (processedProducts < totalProducts) {
+        const batch = grouppedProducts.slice(
+          processedProducts,
+          processedProducts + batchSize
+        );
 
-      await Promise.all(
-        batch.map(async (product) => {
-          try {
-            const productVariants = product.variants;
-            await this.createOrUpdateProductWithVariants(productVariants);
-          } catch (e) {
-            console.log("an error occured while processing syncing", e);
-          }
-        })
-      );
+        await Promise.all(
+          batch.map(async (product) => {
+            try {
+              const productVariants = product.variants;
+              await this.createOrUpdateProductWithVariants(productVariants);
+            } catch (e) {
+              console.log("an error occured while processing syncing", e);
+            }
+          })
+        );
 
-      processedProducts += batch.length;
+        processedProducts += batch.length;
+      }
     }
   }
 }
