@@ -114,11 +114,18 @@ class SyncProductsService extends TransactionBaseService {
       });
 
       if (existingProducts[0] && existingProducts[0].id) {
-        await this.createVariantsForProduct(
-          existingProducts[0],
-          supplierProducts
-        );
-        return;
+        try {
+          await this.createVariantsForProduct(
+            existingProducts[0],
+            supplierProducts
+          );
+          return;
+        } catch (e) {
+          console.log(
+            "something went wrong when trying to create variants for existing products",
+            e
+          );
+        }
       }
 
       const newProduct = await this.createProduct(baseProduct);
