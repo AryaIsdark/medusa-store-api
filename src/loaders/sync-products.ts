@@ -1,11 +1,4 @@
 import { AwilixContainer } from "awilix";
-import {
-  getImages,
-  groupProductsByReference,
-  prepareProductObj,
-  prepareProductVarianObj,
-  uploadImages,
-} from "../api/routes/admin/products/helpers/helpers";
 
 const syncProductsJob = async (
   container: AwilixContainer,
@@ -21,7 +14,9 @@ const syncProductsJob = async (
       const supplierProductsService = container.resolve(
         "supplierProductsService"
       );
-      await supplierProductsService.beginSync();
+      await supplierProductsService.beginCreateSync();
+      await supplierProductsService.beginSyncUploadImages();
+      await supplierProductsService.beginSyncImages();
     }
   );
 };
