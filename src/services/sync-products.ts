@@ -159,6 +159,14 @@ class SyncProductsService extends TransactionBaseService {
 
     await Promise.all(
       supplierProducts.map(async (supplierProduct) => {
+        const possibleVariant = this.productVariantService.retrieveBySKU(
+          supplierProduct.sku
+        );
+        // If variant already exist return.
+        if (possibleVariant) {
+          await this.updateSupplierProduct(supplierProduct);
+        }
+
         const variantOptions = [
           {
             option_id: productOption.id,
