@@ -159,7 +159,7 @@ class SyncProductsService extends TransactionBaseService {
 
     await Promise.all(
       supplierProducts.map(async (supplierProduct) => {
-        const possibleVariant = this.productVariantService.retrieveBySKU(
+        const possibleVariant = await this.productVariantService.retrieveBySKU(
           supplierProduct.sku
         );
         console.log("sync-products:165 - possibleVariant", possibleVariant);
