@@ -12,8 +12,18 @@ const syncProductsJob = async (
     async () => {
       try {
         // job to execute
+        const supplierProductService = container.resolve(
+          "supplierProductService"
+        );
+        const newSupplilerProducts = supplierProductService.search({
+          isCreatedInStore: false,
+        });
         const syncProductsService = container.resolve("syncProductsService");
-        await syncProductsService.beginCreateSync();
+
+        console.log("sync-products-job:17", newSupplilerProducts.length);
+        if (newSupplilerProducts.length) {
+          await syncProductsService.beginCreateSync();
+        }
       } catch (error) {
         // Handle the error (you can log it, for example)
         console.error("Error occurred during job execution:", error);
