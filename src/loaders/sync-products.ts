@@ -8,7 +8,7 @@ const syncProductsJob = async (
   jobSchedulerService.create(
     "sync-products-create-job",
     {},
-    "0 0 * * 3", // The cron expression for running every Wednesday at 00:00 (midnight)
+    "0 0 * * *", // The cron expression for running every day at 00:00 (midnight)
     async () => {
       try {
         // Your job logic goes here
