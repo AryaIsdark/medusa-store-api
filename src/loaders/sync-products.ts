@@ -4,14 +4,26 @@ const syncProductsJob = async (
   container: AwilixContainer,
   options: Record<string, any>
 ) => {
+  // Add a flag to track if the job has already run
+  let isJobExecuted = false;
+
   const jobSchedulerService = container.resolve("jobSchedulerService");
   jobSchedulerService.create(
     "sync-products-create-job",
     {},
-    "* * * * *",
+    "0 0 * * 3", // The cron expression for running every Wednesday at 00:00 (midnight)
     async () => {
       try {
-        // job to execute
+        // Check if the job has already been executed
+        if (isJobExecuted) {
+          console.log("Job already executed. Skipping...");
+          return;
+        }
+
+        // Set the flag to true, indicating the job has run
+        isJobExecuted = true;
+
+        // Rest of your existing job logic goes here
         const supplierProductService = container.resolve(
           "supplierProductService"
         );
