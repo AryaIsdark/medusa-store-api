@@ -15,7 +15,7 @@ const syncProductsJob = async (
         const supplierProductService = container.resolve(
           "supplierProductService"
         );
-        const newSupplilerProducts = supplierProductService.search({
+        const newSupplilerProducts = await supplierProductService.search({
           isCreatedInStore: false,
         });
         const syncProductsService = container.resolve("syncProductsService");
