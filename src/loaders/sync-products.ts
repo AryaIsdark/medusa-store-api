@@ -10,9 +10,14 @@ const syncProductsJob = async (
     {},
     "* * * * *",
     async () => {
-      // job to execute
-      const syncProductsService = container.resolve("syncProductsService");
-      await syncProductsService.beginCreateSync();
+      try {
+        // job to execute
+        const syncProductsService = container.resolve("syncProductsService");
+        await syncProductsService.beginCreateSync();
+      } catch (error) {
+        // Handle the error (you can log it, for example)
+        console.error("Error occurred during job execution:", error);
+      }
     }
   );
 };

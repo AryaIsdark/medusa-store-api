@@ -162,32 +162,33 @@ class SyncProductsService extends TransactionBaseService {
         const possibleVariant = this.productVariantService.retrieveBySKU(
           supplierProduct.sku
         );
+        console.log("sync-products:165 - possibleVariant", possibleVariant);
         // If variant already exist return.
         if (possibleVariant) {
           await this.updateSupplierProduct(supplierProduct);
-        }
+        } else {
+          const variantOptions = [
+            {
+              option_id: productOption.id,
+              value: supplierProduct.productName,
+            },
+          ];
 
-        const variantOptions = [
-          {
-            option_id: productOption.id,
-            value: supplierProduct.productName,
-          },
-        ];
-
-        try {
-          const newVariant: ProductVariant =
-            await this.productVariantService.create(
-              product.id,
-              prepareProductVarianObj(supplierProduct, variantOptions)
+          try {
+            const newVariant: ProductVariant =
+              await this.productVariantService.create(
+                product.id,
+                prepareProductVarianObj(supplierProduct, variantOptions)
+              );
+            if (newVariant.id) {
+              await this.updateSupplierProduct(supplierProduct);
+            }
+          } catch (e) {
+            console.log(
+              `something went wrong when trying to create variant ${supplierProduct.sku} - ${supplierProduct.productName}`,
+              e
             );
-          if (newVariant.id) {
-            await this.updateSupplierProduct(supplierProduct);
           }
-        } catch (e) {
-          console.log(
-            `something went wrong when trying to create variant ${supplierProduct.sku} - ${supplierProduct.productName}`,
-            e
-          );
         }
       })
     );
@@ -362,6 +363,39 @@ class SyncProductsService extends TransactionBaseService {
 
   async beginCreateSync() {
     const newSupplierProducts = await this.supplierProductService.list();
+    console.log("sync-products.ts:365", newSupplierProducts.length);
+
+    const grouppedProducts = this.groupProductsByParentId(newSupplierProducts);
+
+    const batchSize = 1; // Set the desired batch size
+    const totalProducts = grouppedProducts.length;
+    let processedProducts = 0;
+
+    while (processedProducts < totalProducts) {
+      const batch = grouppedProducts.slice(
+        processedProducts,
+        processedProducts + batchSize
+      );
+
+      await Promise.all(
+        batch.map(async (supplierProduct) => {
+          try {
+            const productVariants = supplierProduct.variants;
+            await this.createOrUpdateProductWithVariants(productVariants);
+          } catch (e) {
+            console.log("an error occured while processing syncing", e);
+          }
+        })
+      );
+
+      processedProducts += batch.length;
+    }
+  }
+
+  async beginCreateSync_() {
+    const newSupplierProducts = await this.supplierProductService.list();
+
+    console.log("sync-products.ts:371", newSupplierProducts.length);
     const hasNewProducts = newSupplierProducts.some(
       (item) => item.isCreatedInStore === false
     );
