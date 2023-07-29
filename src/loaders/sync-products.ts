@@ -1,6 +1,9 @@
 import { AwilixContainer } from "awilix";
 
-const syncProductsJob = async (container: AwilixContainer) => {
+const syncProductsJob = async (
+  container: AwilixContainer,
+  options: Record<string, any>
+) => {
   const jobSchedulerService = container.resolve("jobSchedulerService");
   jobSchedulerService.create(
     "sync-products-create-job",
