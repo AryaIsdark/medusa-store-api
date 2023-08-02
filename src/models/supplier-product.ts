@@ -12,22 +12,10 @@ export class SupplierProduct extends BaseEntity {
   supplierId: string;
 
   @Column({ type: "varchar", nullable: true })
-  ean: string;
-
-  @Column({ type: "varchar", nullable: true })
   sku: string;
-
-  @Column({ type: "decimal", nullable: true })
-  price: number;
 
   @Column({ type: "varchar", nullable: true })
   productName: string;
-
-  @Column({ type: "int", nullable: true })
-  quantity: number;
-
-  @Column({ type: "decimal", nullable: true })
-  weight: number;
 
   @Column({ type: "varchar", nullable: true })
   category: string;
@@ -36,28 +24,7 @@ export class SupplierProduct extends BaseEntity {
   brand: string;
 
   @Column({ type: "varchar", nullable: true })
-  imageUrl: string;
-
-  @Column({ type: "varchar", nullable: true })
-  expiryDate: string;
-
-  @Column({ type: "decimal", nullable: true })
-  promo: number;
-
-  @Column({ type: "decimal", nullable: true })
-  wholeSalePriceWithYourDiscount: number;
-
-  @Column({ type: "decimal", nullable: true })
-  wholeSalePrice: number;
-
-  @Column({ type: "decimal", nullable: true })
-  rpr: number;
-
-  @Column({ type: "varchar", nullable: true })
   mainProductName: string;
-
-  @Column({ type: "varchar", nullable: true })
-  variantName: string;
 
   @Column({ type: "boolean", default: false })
   isVariant: boolean;
@@ -67,9 +34,6 @@ export class SupplierProduct extends BaseEntity {
 
   @Column({ type: "varchar", nullable: true })
   parentId: string;
-
-  @Column({ type: "boolean", nullable: false })
-  isCreatedInStore: boolean;
 
   @OneToMany(() => SupplierProductVariant, (variant) => variant.supplierProduct)
   variants: SupplierProductVariant[];

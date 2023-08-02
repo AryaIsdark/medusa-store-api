@@ -1,5 +1,5 @@
 import { TransactionBaseService } from "@medusajs/medusa";
-import SupplierProductVariantRepository from "../repositories/supplier-product";
+import SupplierProductVariantRepository from "../repositories/supplier-product-variant";
 import { SupplierProductVariant } from "models/supplier-product-variant";
 
 class SupplierProductVariantService extends TransactionBaseService {
@@ -10,6 +10,13 @@ class SupplierProductVariantService extends TransactionBaseService {
 
     this.supplierProductVariantRepository = supplierProductVariantRepository;
     this.manager_ = manager;
+  }
+
+  async list() {
+    const repo = this.manager_.withRepository(
+      this.supplierProductVariantRepository
+    );
+    return repo.find();
   }
 
   async update(id, data: Partial<SupplierProductVariant>) {

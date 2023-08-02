@@ -6,29 +6,28 @@ import {
   SalesChannelService,
   ProductVariant,
   Product,
+  ProductStatus,
 } from "@medusajs/medusa";
 import SupplierProductService from "./supplier-product";
 import { SupplierProduct } from "models/supplier-product";
+
 import {
-  prepareProductObj,
-  prepareProductVarianObj,
-} from "../api/routes/admin/products/helpers/helpers";
-import { UpdateProductVariantInput } from "@medusajs/medusa/dist/types/product-variant";
+  CreateProductVariantInput,
+  UpdateProductVariantInput,
+} from "@medusajs/medusa/dist/types/product-variant";
+import { CreateProductInput } from "@medusajs/medusa/dist/types/product";
 import {
   UpdateProductInput,
   FindProductConfig,
 } from "@medusajs/medusa/dist/types/product";
-import cloudinary from "cloudinary";
 
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+import SupplierProductVariantService from "./supplier-product-variant";
+import { SupplierProductVariant } from "models/supplier-product-variant";
+import { exchangeRates } from "../helpers/price-helpers";
 
 class SyncProductsService extends TransactionBaseService {
   private supplierProductService: SupplierProductService;
+  private supplierProductVariantService: SupplierProductVariantService;
   private productService: ProductService;
   private productVariantService: ProductVariantService;
   private shippingProfileService: ShippingProfileService;
@@ -41,6 +40,8 @@ class SyncProductsService extends TransactionBaseService {
     super(container);
     // Services
     this.supplierProductService = container.supplierProductService;
+    this.supplierProductVariantService =
+      container.supplierProductVariantService;
     this.productService = container.productService;
     this.productVariantService = container.productVariantService;
     this.shippingProfileService = container.shippingProfileService;
@@ -52,382 +53,200 @@ class SyncProductsService extends TransactionBaseService {
       this.salesChannelService.retrieveDefault();
   }
 
-  private async updateSupplierProduct(supplierProduct: SupplierProduct) {
+  getPrices(price_in_euro: number) {
+    const eur_to_sek_rate = exchangeRates.eur_to_sek * 100; // Medusa works with cents
+    const price_in_sek = price_in_euro * eur_to_sek_rate;
+    return [
+      {
+        currency_code: "sek",
+        amount: Math.round(price_in_sek), // Round to the nearest integer (cents)
+      },
+    ];
+  }
+
+  getProductImages(variants: SupplierProductVariant[]) {
+    return variants.map((variant) => variant.imageUrl);
+  }
+
+  async getParentProduct(
+    supplierProductVariant: SupplierProductVariant
+  ): Promise<Product> {
     try {
-      await this.supplierProductService.update(supplierProduct.id, {
-        isCreatedInStore: true,
-      });
-    } catch (e) {
-      console.log(
-        "something went wrong when trying to update supplier product with id:",
-        supplierProduct.id,
-        e
+      return await this.productService.retrieveByExternalId(
+        supplierProductVariant.supplier_product_id
       );
+    } catch (e) {
+      return null;
     }
   }
 
-  groupProductsByParentId(list) {
-    const groupedProducts = list.reduce((acc, obj) => {
-      const parentId = obj.parentId;
-      // Check if a product with the same parentId exists in the accumulator
-      const existingProduct = acc.find(
-        (item) => item.productParentId === parentId
-      );
+  async getVariantOptions(product: Product, productName: string) {
+    const productOption = await this.productService.retrieveOptionByTitle(
+      "variation",
+      product.id
+    );
+    if (productOption) {
+      const variantOptions = [
+        {
+          option_id: productOption.id,
+          value: productName,
+        },
+      ];
 
-      if (existingProduct) {
-        existingProduct.variants.push(obj);
-      } else {
-        acc.push({
-          productParentId: parentId,
-          variants: [obj],
-        });
-      }
-      return acc;
-    }, []);
+      return variantOptions;
+    }
 
-    return groupedProducts;
+    return null;
   }
 
-  private async createProduct(baseProduct: SupplierProduct, images: string[]) {
+  async updateExistingVariant(
+    productVariant: ProductVariant,
+    data: SupplierProductVariant
+  ) {
+    const updateInput: UpdateProductVariantInput = {
+      prices: this.getPrices(data.wholeSalePrice),
+      inventory_quantity: data.quantity,
+    };
+    await this.productVariantService.update(productVariant.id, updateInput);
+  }
+
+  async updateExistingProduct(product: Product, data: SupplierProduct) {
+    const updateInput: UpdateProductInput = {
+      title: data.productName,
+    };
+    await this.productService.update(product.id, updateInput);
+  }
+
+  async createNewProductVariant(data: SupplierProductVariant) {
+    const parentProduct = await this.getParentProduct(data);
+    if (parentProduct?.id) {
+      const variantOptions = await this.getVariantOptions(
+        parentProduct,
+        data.productName
+      );
+
+      if (variantOptions.length) {
+        const variant: CreateProductVariantInput = {
+          title: data.productName,
+          sku: data.sku,
+          barcode: data.ean,
+          ean: data.ean,
+          upc: data.ean,
+          inventory_quantity: data.quantity ?? 0,
+          options: variantOptions,
+          metadata: { parentId: data.parentId },
+          prices: this.getPrices(data.wholeSalePrice),
+        };
+        await this.productVariantService.create(parentProduct.id, variant);
+      }
+    }
+  }
+
+  async createNewProduct(
+    data: SupplierProduct,
+    shippingProfile,
+    salesChannels,
+    variants: SupplierProductVariant[]
+  ) {
+    const product: CreateProductInput = {
+      title: data.productName,
+      subtitle: data.brand,
+      description: "This is a very good product, buy it...",
+      status: ProductStatus.DRAFT,
+      profile_id: shippingProfile.id,
+      sales_channels: salesChannels,
+      options: [{ title: "variation" }],
+      images: this.getProductImages(variants),
+      external_id: data.id,
+    };
+    try {
+      await this.productService.create(product);
+    } catch (e) {
+      console.log("something went wrong when creating product", e);
+    }
+  }
+
+  async findOneProductVariantBySupplierProduct(
+    supplierProductVariant: SupplierProductVariant
+  ): Promise<ProductVariant> {
+    try {
+      return await this.productVariantService.retrieveBySKU(
+        supplierProductVariant.sku
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async findOneProductBySupplierProduct(
+    supplierProduct: SupplierProduct
+  ): Promise<Product> {
+    try {
+      return await this.productService.retrieveByExternalId(supplierProduct.id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async syncProductVariants(variants: SupplierProductVariant[]) {
+    for (const variant of variants) {
+      // check if variant is already existing in product-variant table
+      const productVariant = await this.findOneProductVariantBySupplierProduct(
+        variant
+      );
+
+      if (productVariant?.id) {
+        // Update variant
+        await this.updateExistingVariant(productVariant, variant);
+      }
+
+      if (!productVariant?.id) {
+        // create variant
+        await this.createNewProductVariant(variant);
+      }
+    }
+  }
+
+  async syncProducts(supplierProducts: SupplierProduct[]) {
     const [defaulShippingProfile, defaultSalesChannel] = await Promise.all([
       this.defaulShippingProfilePromise,
       this.defaultSalesChannelPromise,
     ]);
 
-    return this.productService.create(
-      prepareProductObj(
-        baseProduct,
-        images,
-        defaulShippingProfile,
-        defaultSalesChannel
-      )
-    );
-  }
-
-  private async createOrUpdateProductWithVariants(
-    supplierProducts: SupplierProduct[]
-  ) {
-    if (supplierProducts.length) {
-      const baseProduct = supplierProducts[0];
-      const productImages = supplierProducts.map(
-        (supplierProduct) => supplierProduct.imageUrl
+    for (const supplierProduct of supplierProducts) {
+      // check if a corresponding product exists in products table
+      const product = await this.findOneProductBySupplierProduct(
+        supplierProduct
       );
-      const existingProducts: Product[] = await this.productService.list({
-        q: baseProduct.sku,
+
+      const variants = await this.supplierProductVariantService.search({
+        supplier_product_id: supplierProduct.id,
       });
 
-      if (existingProducts[0] && existingProducts[0].id) {
-        try {
-          await this.createVariantsForProduct(
-            existingProducts[0],
-            supplierProducts
-          );
-          return;
-        } catch (e) {
-          console.log(
-            "something went wrong when trying to create variants for existing products",
-            e
-          );
-        }
+      // if product exists
+      if (product?.id) {
+        // update Product
+        await this.updateExistingProduct(product, supplierProduct);
       }
 
-      const newProduct = await this.createProduct(baseProduct, productImages);
-      const variants = supplierProducts.filter(
-        (item) => item.isCreatedInStore === false
-      );
-      try {
-        if (newProduct.id && variants.length) {
-          await this.createVariantsForProduct(newProduct, variants);
-        }
-      } catch (e) {
-        console.log(
-          `something went wrong when trying to create product ${baseProduct.sku} - ${baseProduct.productName}`,
-          e
+      // if product does not exits
+      if (!product?.id) {
+        await this.createNewProduct(
+          supplierProduct,
+          defaulShippingProfile,
+          [defaultSalesChannel],
+          variants
         );
       }
     }
   }
 
-  private async createVariantsForProduct(
-    product: Product,
-    supplierProducts: SupplierProduct[]
-  ) {
-    const productOption = await this.productService.retrieveOptionByTitle(
-      "variation",
-      product.id
-    );
-
-    await Promise.all(
-      supplierProducts.map(async (supplierProduct) => {
-        const possibleVariant = await this.productVariantService.retrieveBySKU(
-          supplierProduct.sku
-        );
-        console.log("sync-products:165 - possibleVariant", possibleVariant);
-        // If variant already exist return.
-        if (possibleVariant) {
-          await this.updateSupplierProduct(supplierProduct);
-        } else {
-          const variantOptions = [
-            {
-              option_id: productOption.id,
-              value: supplierProduct.productName,
-            },
-          ];
-
-          try {
-            const newVariant: ProductVariant =
-              await this.productVariantService.create(
-                product.id,
-                prepareProductVarianObj(supplierProduct, variantOptions)
-              );
-            if (newVariant.id) {
-              await this.updateSupplierProduct(supplierProduct);
-            }
-          } catch (e) {
-            console.log(
-              `something went wrong when trying to create variant ${supplierProduct.sku} - ${supplierProduct.productName}`,
-              e
-            );
-          }
-        }
-      })
-    );
-  }
-
-  async updateExistingProducts(supplierProducts: SupplierProduct[]) {
-    await Promise.all(
-      supplierProducts.map(async (supplierProduct) => {
-        console.log("I was ran for product:", supplierProduct.sku);
-        const variants: ProductVariant[] =
-          await this.productVariantService.list({
-            sku: supplierProduct.sku,
-          });
-        if (variants[0].id) {
-          try {
-            const updateData: UpdateProductVariantInput = {
-              inventory_quantity: supplierProduct.quantity,
-            };
-            const variantData = { variant: variants[0], updateData };
-            await this.productVariantService.update([variantData]);
-          } catch (e) {
-            console.log(
-              `something went wrong while updating ${variants[0].sku} - ${variants[0].title}`,
-              e
-            );
-          }
-        }
-      })
-    );
-  }
-
-  async findParentProductByVariant(productVariant: ProductVariant) {
-    const config: FindProductConfig = {
-      relations: ["image"],
-    };
-    return await this.productService.retrieve(productVariant.product_id);
-  }
-
-  async findRelatedProductVariantBySupplierProduct(supplierProduct) {
-    const variants: ProductVariant[] = await this.productVariantService.list({
-      sku: supplierProduct.sku,
-    });
-    return variants[0];
-  }
-
-  async updateProductVariant(
-    variant: ProductVariant,
-    updateData: UpdateProductVariantInput
-  ) {
-    try {
-      const variantData = { variant, updateData };
-      await this.productVariantService.update([variantData]);
-    } catch (e) {
-      console.log(
-        `something went wrong when trying to update variant: ${variant.id}`,
-        e
-      );
-    }
-  }
-
-  async upateProductVariantImages(uploadResults) {
-    Promise.all(
-      uploadResults.map(async (uploadResult) => {
-        const supplierProduct = uploadResult.supplierProduct;
-        const imageUrl = uploadResult.image.secure_url;
-        const productVariant =
-          await this.findRelatedProductVariantBySupplierProduct(
-            supplierProduct
-          );
-        console.log("productVariant - sync-product.ts:249", productVariant);
-        // const existingImages: string[] = productVariant.metadata
-        //   ?.syncedImages as string[];
-        await this.updateProductVariant(productVariant, {
-          metadata: { syncedImages: [imageUrl] },
-        });
-      })
-    );
-  }
-
-  async uploadImages(supplierProducts) {
-    const uploadResults = [];
-    await Promise.all(
-      supplierProducts.map((supplierProduct) => {
-        const possibleImage = this.getProductVariantImage(supplierProduct);
-        if (possibleImage) {
-          uploadResults.push(possibleImage);
-        }
-        const imageUrl = supplierProduct.imageUrl;
-        cloudinary.v2.uploader
-          .upload(imageUrl, {
-            public_id: `medusa/${supplierProduct.sku}/${supplierProduct.ean}`,
-            overwrite: false,
-          })
-          .catch((e) => {
-            throw e;
-          })
-          .then((image) => {
-            console.log(image);
-            uploadResults.push({ supplierProduct, image });
-          });
-      })
-    );
-
-    return uploadResults;
-  }
-
-  async getProductVariantImage(productVariant: ProductVariant) {
-    const public_id = `medusa/${productVariant.sku}/${productVariant.ean}`;
-    return await cloudinary.v2.api.resource(public_id);
-  }
-
-  async beginSyncImages() {
-    const productVariants: ProductVariant[] =
-      await this.productVariantService.list({});
-    Promise.all(
-      productVariants.map(async (productVariant) => {
-        const image = await this.getProductVariantImage(productVariant);
-        console.log("sync-product.ts:293", image);
-        if (image) {
-          await this.updateProductVariant(productVariant, {
-            metadata: { storeImages: [image] },
-          });
-          const parentProduct = await this.findParentProductByVariant(
-            productVariant
-          );
-          console.log("sync-product.ts:301", parentProduct);
-          if (parentProduct) {
-            const data: UpdateProductInput = {
-              images: [image.secure_url],
-            };
-            await this.productService.update(parentProduct.id, data);
-          }
-        }
-      })
-    );
-  }
-
-  async beginSyncUploadImages() {
-    // await cloudinary.v2.api.delete_all_resources();
+  async syncProductsAndVariants() {
     const supplierProducts = await this.supplierProductService.list();
-
-    try {
-      const uploadResult = await this.uploadImages(supplierProducts);
-      if (uploadResult.length) {
-        try {
-          await this.upateProductVariantImages(uploadResult);
-        } catch (e) {
-          console.log(
-            "something went wrong when trying to update varian after image upload",
-            e
-          );
-        }
-      }
-    } catch (e) {
-      console.log("something went wrong when trying to upload image", e);
-    }
-  }
-
-  async beginUpdateSync() {
-    const supplierProducts = await this.supplierProductService.search({
-      isCreatedInStore: true,
-    });
-
-    if (supplierProducts.length) {
-      try {
-        await this.updateExistingProducts(supplierProducts);
-      } catch (e) {
-        console.log("something went wrong while updating products", e);
-      }
-    }
-  }
-
-  async beginCreateSync() {
-    const newSupplierProducts = await this.supplierProductService.list();
-    console.log("sync-products.ts:365", newSupplierProducts.length);
-
-    const grouppedProducts = this.groupProductsByParentId(newSupplierProducts);
-
-    const batchSize = 1; // Set the desired batch size
-    const totalProducts = grouppedProducts.length;
-    let processedProducts = 0;
-
-    while (processedProducts < totalProducts) {
-      const batch = grouppedProducts.slice(
-        processedProducts,
-        processedProducts + batchSize
-      );
-
-      await Promise.all(
-        batch.map(async (supplierProduct) => {
-          try {
-            const productVariants = supplierProduct.variants;
-            await this.createOrUpdateProductWithVariants(productVariants);
-          } catch (e) {
-            console.log("an error occured while processing syncing", e);
-          }
-        })
-      );
-
-      processedProducts += batch.length;
-    }
-  }
-
-  async beginCreateSync_() {
-    const newSupplierProducts = await this.supplierProductService.list();
-
-    console.log("sync-products.ts:371", newSupplierProducts.length);
-    const hasNewProducts = newSupplierProducts.some(
-      (item) => item.isCreatedInStore === false
-    );
-
-    if (hasNewProducts) {
-      const grouppedProducts =
-        this.groupProductsByParentId(newSupplierProducts);
-
-      const batchSize = 1; // Set the desired batch size
-      const totalProducts = grouppedProducts.length;
-      let processedProducts = 0;
-
-      while (processedProducts < totalProducts) {
-        const batch = grouppedProducts.slice(
-          processedProducts,
-          processedProducts + batchSize
-        );
-
-        await Promise.all(
-          batch.map(async (product) => {
-            try {
-              const productVariants = product.variants;
-              await this.createOrUpdateProductWithVariants(productVariants);
-            } catch (e) {
-              console.log("an error occured while processing syncing", e);
-            }
-          })
-        );
-
-        processedProducts += batch.length;
-      }
-    }
+    const supplierProductVariants =
+      await this.supplierProductVariantService.list();
+    await this.syncProducts(supplierProducts);
+    await this.syncProductVariants(supplierProductVariants);
   }
 }
 
