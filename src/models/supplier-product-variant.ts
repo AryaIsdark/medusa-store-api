@@ -1,15 +1,18 @@
-import { BeforeInsert, Column, Entity, OneToMany } from "typeorm";
+import { BeforeInsert, Column, Entity, ManyToOne, JoinColumn } from "typeorm";
 import { BaseEntity } from "@medusajs/medusa";
 import { generateEntityId } from "@medusajs/medusa/dist/utils";
-import { SupplierProductVariant } from "./supplier-product-variant";
+import { SupplierProduct } from "./supplier-product";
 
 @Entity()
-export class SupplierProduct extends BaseEntity {
+export class SupplierProductVariant extends BaseEntity {
   @Column({ type: "varchar", nullable: true })
   reference: string;
 
   @Column({ type: "varchar", nullable: true })
   supplierId: string;
+
+  @Column({ type: "varchar", nullable: false })
+  supplier_product_id: string;
 
   @Column({ type: "varchar", nullable: true })
   ean: string;
@@ -57,25 +60,17 @@ export class SupplierProduct extends BaseEntity {
   mainProductName: string;
 
   @Column({ type: "varchar", nullable: true })
-  variantName: string;
-
-  @Column({ type: "boolean", default: false })
-  isVariant: boolean;
-
-  @Column({ type: "boolean", default: false })
-  hasVariants: boolean;
-
-  @Column({ type: "varchar", nullable: true })
   parentId: string;
 
   @Column({ type: "boolean", nullable: false })
   isCreatedInStore: boolean;
 
-  @OneToMany(() => SupplierProductVariant, (variant) => variant.supplierProduct)
-  variants: SupplierProductVariant[];
+  @ManyToOne(() => SupplierProduct, (product) => product.variants)
+  @JoinColumn({ name: "supplier_product_id" })
+  supplierProduct: SupplierProduct;
 
   @BeforeInsert()
   private beforeInsert(): void {
-    this.id = generateEntityId(this.id, "supplier_product");
+    this.id = generateEntityId(this.id, "supplier_product_variant");
   }
 }

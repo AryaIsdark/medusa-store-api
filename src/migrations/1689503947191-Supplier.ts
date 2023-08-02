@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Supplier1689503947191 implements MigrationInterface {
+export class Supplier1689503947192 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `DROP TABLE IF EXISTS "supplier"; 

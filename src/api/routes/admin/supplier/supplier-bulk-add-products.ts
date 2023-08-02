@@ -5,7 +5,7 @@ import { processExcelFile } from "./supplier-process-product-file";
 const upload = multer({ dest: "uploads/" }).single("file");
 
 export default async (req: multer, res: Response): Promise<void> => {
-  const supplierProductService = req.scope.resolve("supplierProductService");
+  const supplierService = req.scope.resolve("supplierService");
 
   upload(req, res, async (err: any) => {
     if (err) {
@@ -17,10 +17,11 @@ export default async (req: multer, res: Response): Promise<void> => {
 
     processExcelFile(file.path)
       .then(async (data) => {
-        const response = await supplierProductService.bulkCreate(data);
+        const response = await supplierService.syncSupplierProducts(data);
+
         res.json({
           status: 200,
-          data: response,
+          data: data,
         });
       })
       .catch((error) => {
