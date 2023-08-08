@@ -86,7 +86,7 @@ class SyncProductsService extends TransactionBaseService {
         supplierProductVariant.supplier_product_id
       );
     } catch (e) {
-      await this.logError(supplierProductVariant.id, e);
+      // await this.logError(supplierProductVariant.id, e);
     }
   }
 
@@ -124,7 +124,11 @@ class SyncProductsService extends TransactionBaseService {
     const updateInput: UpdateProductInput = {
       title: data.productName,
     };
-    await this.productService.update(product.id, updateInput);
+    try {
+      await this.productService.update(product.id, updateInput);
+    } catch (e) {
+      this.logError(product.id, e);
+    }
   }
 
   async createNewProductVariant(data: SupplierProductVariant) {
@@ -147,7 +151,11 @@ class SyncProductsService extends TransactionBaseService {
           metadata: { parentId: data.parentId },
           prices: this.getPrices(data.wholeSalePrice),
         };
-        await this.productVariantService.create(parentProduct.id, variant);
+        try {
+          await this.productVariantService.create(parentProduct.id, variant);
+        } catch (e) {
+          this.logError(data.id, e);
+        }
       }
     }
   }
@@ -184,7 +192,7 @@ class SyncProductsService extends TransactionBaseService {
         supplierProductVariant.sku
       );
     } catch (e) {
-      await this.logError(supplierProductVariant.id, e);
+      // await this.logError(supplierProductVariant.id, e);
     }
   }
 
@@ -194,7 +202,7 @@ class SyncProductsService extends TransactionBaseService {
     try {
       return await this.productService.retrieveByExternalId(supplierProduct.id);
     } catch (e) {
-      await this.logError(supplierProduct.id, e);
+      // await this.logError(supplierProduct.id, e);
     }
   }
 
