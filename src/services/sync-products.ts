@@ -24,8 +24,10 @@ import {
 import SupplierProductVariantService from "./supplier-product-variant";
 import { SupplierProductVariant } from "models/supplier-product-variant";
 import { exchangeRates } from "../helpers/price-helpers";
+import ErrorLogService from "./error-log";
 
 class SyncProductsService extends TransactionBaseService {
+  private errorLogService: ErrorLogService;
   private supplierProductService: SupplierProductService;
   private supplierProductVariantService: SupplierProductVariantService;
   private productService: ProductService;
@@ -39,6 +41,7 @@ class SyncProductsService extends TransactionBaseService {
   constructor(container) {
     super(container);
     // Services
+    this.errorLogService = container.errorLogService;
     this.supplierProductService = container.supplierProductService;
     this.supplierProductVariantService =
       container.supplierProductVariantService;
@@ -53,8 +56,15 @@ class SyncProductsService extends TransactionBaseService {
       this.salesChannelService.retrieveDefault();
   }
 
+  async logError(entity_id, error) {
+    return await this.errorLogService.create({
+      entity_id: entity_id,
+      error: JSON.stringify(error),
+    });
+  }
+
   getPrices(price_in_euro: number) {
-    const eur_to_sek_rate = exchangeRates.eur_to_sek * 100; // Medusa works with cents
+    const eur_to_sek_rate = exchangeRates.eur_to_sek; // Medusa works with cents
     const price_in_sek = price_in_euro * eur_to_sek_rate;
     return [
       {
@@ -76,7 +86,7 @@ class SyncProductsService extends TransactionBaseService {
         supplierProductVariant.supplier_product_id
       );
     } catch (e) {
-      return null;
+      // await this.logError(supplierProductVariant.id, e);
     }
   }
 
@@ -114,7 +124,11 @@ class SyncProductsService extends TransactionBaseService {
     const updateInput: UpdateProductInput = {
       title: data.productName,
     };
-    await this.productService.update(product.id, updateInput);
+    try {
+      await this.productService.update(product.id, updateInput);
+    } catch (e) {
+      this.logError(product.id, e);
+    }
   }
 
   async createNewProductVariant(data: SupplierProductVariant) {
@@ -137,7 +151,11 @@ class SyncProductsService extends TransactionBaseService {
           metadata: { parentId: data.parentId },
           prices: this.getPrices(data.wholeSalePrice),
         };
-        await this.productVariantService.create(parentProduct.id, variant);
+        try {
+          await this.productVariantService.create(parentProduct.id, variant);
+        } catch (e) {
+          this.logError(data.id, e);
+        }
       }
     }
   }
@@ -162,7 +180,7 @@ class SyncProductsService extends TransactionBaseService {
     try {
       await this.productService.create(product);
     } catch (e) {
-      console.log("something went wrong when creating product", e);
+      await this.logError(data.id, e);
     }
   }
 
@@ -174,7 +192,7 @@ class SyncProductsService extends TransactionBaseService {
         supplierProductVariant.sku
       );
     } catch (e) {
-      return null;
+      // await this.logError(supplierProductVariant.id, e);
     }
   }
 
@@ -184,7 +202,7 @@ class SyncProductsService extends TransactionBaseService {
     try {
       return await this.productService.retrieveByExternalId(supplierProduct.id);
     } catch (e) {
-      return null;
+      // await this.logError(supplierProduct.id, e);
     }
   }
 
