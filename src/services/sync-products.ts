@@ -64,7 +64,7 @@ class SyncProductsService extends TransactionBaseService {
   }
 
   getPrices(price_in_euro: number) {
-    const eur_to_sek_rate = exchangeRates.eur_to_sek; // Medusa works with cents
+    const eur_to_sek_rate = exchangeRates.eur_to_sek * 100; // Medusa works with cents
     const price_in_sek = price_in_euro * eur_to_sek_rate;
     return [
       {
