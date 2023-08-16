@@ -14,16 +14,22 @@ export default async (req: Request, res: Response): Promise<void> => {
     });
 
     const productFilesDirectory = "/public_html/nutri-stock/powerbody.xls";
-    const localDirectory = "./product_downloads/powerbody.xls";
-    console.log("Connected to FTP server");
+    const localDirectory = "./product_downloads";
+    const localFilePath = `${localDirectory}/powerbody.xls`;
 
     if (!fs.existsSync(localDirectory)) {
       fs.mkdirSync(localDirectory);
     }
 
+    // Delete the local file if it already exists
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
+
     const remoteFilePath = `${productFilesDirectory}`;
-    const localFilePath = `${localDirectory}`;
     await client.downloadTo(localFilePath, remoteFilePath);
+
+    console.log("File downloaded and any existing local file deleted.");
 
     res.json({
       status: 200,
