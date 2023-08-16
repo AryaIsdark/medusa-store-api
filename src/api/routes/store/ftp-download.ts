@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as ftp from "basic-ftp";
+import * as fs from "fs";
 
 export default async (req: Request, res: Response): Promise<void> => {
   const client = new ftp.Client();
@@ -12,26 +13,29 @@ export default async (req: Request, res: Response): Promise<void> => {
       port: 21,
     });
 
+    const productFilesDirectory = "/public_html/nutri-stock";
+    const localDirectory = "./product_downloads";
     console.log("Connected to FTP server");
 
     // List files in the remote directory
-    const list = await client.list();
-    console.log(
-      "Remote files:",
-      list.map((entry) => entry.name)
-    );
+    const fileList = await client.list(productFilesDirectory);
 
-    // Download a file
-    // const remoteFilePath = "/path/to/remote/file.txt";
-    // const localFilePath = "./downloaded-file.txt";
-    // await client.downloadTo(localFilePath, remoteFilePath);
-    // console.log("File downloaded to:", localFilePath);
-    console.log(list);
-    const fileNames = list.map((entry) => entry.name);
+    if (!fs.existsSync(localDirectory)) {
+      fs.mkdirSync(localDirectory);
+    }
+
+    // Download each file
+    for (const file of fileList) {
+      const remoteFilePath = `${productFilesDirectory}/${file.name}`;
+      const localFilePath = `${localDirectory}/${file.name}`;
+      await client.downloadTo(localFilePath, remoteFilePath);
+
+      console.log(`Downloaded: ${file.name}`);
+    }
 
     res.json({
       status: 200,
-      files: fileNames,
+      files: fileList.map((entry) => entry.name),
     });
   } catch (error) {
     console.error("Error:", error);
