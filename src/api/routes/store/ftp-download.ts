@@ -13,9 +13,10 @@ export default async (req: Request, res: Response): Promise<void> => {
       port: 21,
     });
 
-    const productFilesDirectory = "/public_html/nutri-stock/powerbody.xls";
+    const productFilesDirectory =
+      "/public_html/nutri-stock/test/products-test-file.xlsx";
     const localDirectory = "./product_downloads";
-    const localFilePath = `${localDirectory}/powerbody.xls`;
+    const localFilePath = `${localDirectory}/products-test-file.xlsx`;
 
     if (!fs.existsSync(localDirectory)) {
       fs.mkdirSync(localDirectory);
