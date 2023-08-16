@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { processExcelFile } from "../admin/supplier/supplier-process-product-file";
 
 export default async (req: Request, res: Response): Promise<void> => {
-  const directory = "./product_downloads/products-test-file.xlsx";
+  const directory = "./product_downloads/powerbody.xls";
   const supplierService = req.scope.resolve("supplierService");
 
   processExcelFile(directory)
