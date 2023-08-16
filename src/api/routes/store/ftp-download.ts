@@ -13,29 +13,20 @@ export default async (req: Request, res: Response): Promise<void> => {
       port: 21,
     });
 
-    const productFilesDirectory = "/public_html/nutri-stock";
-    const localDirectory = "./product_downloads";
+    const productFilesDirectory = "/public_html/nutri-stock/powerbody.xls";
+    const localDirectory = "./product_downloads/powerbody.xls";
     console.log("Connected to FTP server");
-
-    // List files in the remote directory
-    const fileList = await client.list(productFilesDirectory);
 
     if (!fs.existsSync(localDirectory)) {
       fs.mkdirSync(localDirectory);
     }
 
-    // Download each file
-    for (const file of fileList) {
-      const remoteFilePath = `${productFilesDirectory}/${file.name}`;
-      const localFilePath = `${localDirectory}/${file.name}`;
-      await client.downloadTo(localFilePath, remoteFilePath);
-
-      console.log(`Downloaded: ${file.name}`);
-    }
+    const remoteFilePath = `${productFilesDirectory}`;
+    const localFilePath = `${localDirectory}`;
+    await client.downloadTo(localFilePath, remoteFilePath);
 
     res.json({
       status: 200,
-      files: fileList.map((entry) => entry.name),
     });
   } catch (error) {
     console.error("Error:", error);

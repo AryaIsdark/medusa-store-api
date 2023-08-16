@@ -11,6 +11,7 @@ import syncUploadProductImages from "./sync-upload-product-images";
 import syncProductImages from "./sync-product-images";
 import resetDb from "./reset-db";
 import ftpDownload from "./ftp-download";
+import readFiles from "./read-files";
 
 // Initialize a custom router
 const router = Router();
@@ -36,4 +37,5 @@ export function attachStoreRoutes(storeRouter: Router) {
   router.get("/sync-product-images", wrapHandler(syncProductImages));
   router.get("/reset-db", wrapHandler(resetDb));
   router.get("/ftp-download", wrapHandler(ftpDownload));
+  router.get("/read-files", wrapHandler(readFiles));
 }
