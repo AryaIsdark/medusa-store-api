@@ -5,7 +5,7 @@ const SyncProductsAndVariants = async (
   options: Record<string, any>
 ) => {
   const jobSchedulerService = container.resolve("jobSchedulerService");
-  jobSchedulerService.create("sync-supplier-products", {}, "40 22 * * *", async () => {
+  jobSchedulerService.create("sync-supplier-products", {}, "12 0 * * *", async () => {
     
     const syncProductsService = container.resolve("syncProductsService");
     

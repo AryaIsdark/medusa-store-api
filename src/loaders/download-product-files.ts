@@ -6,7 +6,7 @@ const DownloadProductFilesJob = async (
   options: Record<string, any>
 ) => {
   const jobSchedulerService = container.resolve("jobSchedulerService");
-  jobSchedulerService.create("download-product-files", {}, "30 22 * * *", async () => {
+  jobSchedulerService.create("download-product-files", {}, "10 0 * * *", async () => {
     const supplierService = container.resolve("supplierService");
     try{
        await supplierService.downloadFiles()
