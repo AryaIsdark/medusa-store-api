@@ -65,7 +65,7 @@ const projectConfig = {
   admin_cors: ADMIN_CORS,
 };
 
-if (process.env.ENVIRONMENT !== "development") {
+// if (process.env.ENVIRONMENT !== "development") {
   modules = {
     eventBus: {
       resolve: "@medusajs/event-bus-redis",
@@ -82,7 +82,7 @@ if (process.env.ENVIRONMENT !== "development") {
   };
 
   projectConfig.redis_url = REDIS_URL;
-}
+// }
 
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
 

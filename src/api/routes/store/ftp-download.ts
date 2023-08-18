@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
 
-
 export default async (req: Request, res: Response): Promise<void> => {
 
   const supplierService = req.scope.resolve("supplierService");
-  
-  try{
 
+  try{
     const data = await supplierService.downloadFiles()
     res.status(200)
     res.json({
