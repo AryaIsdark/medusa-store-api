@@ -5,7 +5,7 @@ const publishJob = async (
   options: Record<string, any>
 ) => {
   const jobSchedulerService = container.resolve("jobSchedulerService");
-  jobSchedulerService.create("publish-products", {}, "13 0 * * *", async () => {
+  jobSchedulerService.create("publish-products", {}, "*/13 * * * *", async () => {
     // job to execute
     const productService = container.resolve("productService");
     const draftProducts = await productService.list({

@@ -6,7 +6,7 @@ const SyncSupplierProductsJob = async (
   options: Record<string, any>
 ) => {
   const jobSchedulerService = container.resolve("jobSchedulerService");
-  jobSchedulerService.create("sync-supplier-products", {}, "11 0 * * *", async () => {
+  jobSchedulerService.create("sync-supplier-products", {}, "*/11 * * * *", async () => {
     
     const supplierService = container.resolve("supplierService");
     const directory = "./product_downloads/products-test-file.xlsx";
