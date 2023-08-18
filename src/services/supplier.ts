@@ -4,11 +4,15 @@ import SupplierProductService from "./supplier-product";
 import SupplierProductVariantService from "./supplier-product-variant";
 import { SupplierProduct } from "models/supplier-product";
 import { SupplierProductVariant } from "models/supplier-product-variant";
+import * as ftp from "basic-ftp";
+import * as fs from "fs";
+import ErrorLogService from "./error-log";
 
 class SupplierService extends TransactionBaseService {
   protected readonly supplierRepository: typeof SupplierRepository;
   private supplierProductService: SupplierProductService;
   private supplierProductVariantService: SupplierProductVariantService;
+  private errorLogService : ErrorLogService
 
   constructor(container, { supplierRepository, manager }) {
     super(container);
@@ -18,6 +22,56 @@ class SupplierService extends TransactionBaseService {
     this.supplierProductService = container.supplierProductService;
     this.supplierProductVariantService =
       container.supplierProductVariantService;
+      this.errorLogService = container.errorLogService
+  }
+
+  async downloadFiles() {
+    const client = new ftp.Client();
+    try{
+      await client.access({
+        host: process.env.FTP_HOST,
+        user: process.env.FTP_USER,
+        password: process.env.FTP_PASSWORD,
+        port: 21,
+      });
+  
+      const productFilesDirectory =
+        "/public_html/nutri-stock/test/products-test-file.xlsx";
+      const localDirectory = "./product_downloads";
+      const localFilePath = `${localDirectory}/products-test-file.xlsx`;
+  
+      if (!fs.existsSync(localDirectory)) {
+        fs.mkdirSync(localDirectory);
+      }
+  
+      // Delete the local file if it already exists
+      if (fs.existsSync(localFilePath)) {
+        fs.unlinkSync(localFilePath);
+      }
+  
+      const remoteFilePath = `${productFilesDirectory}`;
+      await client.downloadTo(localFilePath, remoteFilePath);
+
+      return {
+        message: 'file downloaded and any existing local file deleted.'
+      }
+    }
+
+    catch(error){
+      this.errorLogService.create({
+        entity_id: 'download-supplier-files',
+        error: JSON.stringify(error),
+      });
+
+      throw error
+    }
+
+    finally{
+      client.close()
+    }
+    
+
+  
   }
 
   async getParentProduct(productVariant) {
@@ -127,7 +181,7 @@ class SupplierService extends TransactionBaseService {
     try {
       await this.syncProducts(supplierProducts);
       await this.syncVariants(supplierProducts);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   async bulkCreate(data) {
