@@ -1,7 +1,7 @@
 import { AwilixContainer } from "awilix";
 
 
-const publishJob = async (
+const DownloadProductFilesJob = async (
   container: AwilixContainer,
   options: Record<string, any>
 ) => {
@@ -18,4 +18,4 @@ const publishJob = async (
   });
 };
 
-export default publishJob;
+export default DownloadProductFilesJob;
