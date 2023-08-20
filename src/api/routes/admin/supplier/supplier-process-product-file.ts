@@ -87,16 +87,14 @@ function modifyFile(filename) {
 
 
 export const processExcelFile = async (file) => {
-  // console.log('heeeeeeeeey')
+  
   const modifiedSheet = modifyFile(file)
 
   // Convert the sheet to JSON
   let test = XLSX.utils.sheet_to_json(modifiedSheet);
 
-  
   const data = test.slice(9 , test.length)
   
-  console.log('dataaaaaa',data)
   // Process the data
   data.forEach((row, index) => {
 
