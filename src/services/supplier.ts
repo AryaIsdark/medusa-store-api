@@ -36,9 +36,9 @@ class SupplierService extends TransactionBaseService {
       });
   
       const productFilesDirectory =
-        "/public_html/nutri-stock/test/products-test-file.xlsx";
+        "/public_html/nutri-stock/powerbody.xls";
       const localDirectory = "./product_downloads";
-      const localFilePath = `${localDirectory}/products-test-file.xlsx`;
+      const localFilePath = `${localDirectory}/powerbody.xls`;
   
       if (!fs.existsSync(localDirectory)) {
         fs.mkdirSync(localDirectory);

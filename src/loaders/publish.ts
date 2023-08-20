@@ -5,13 +5,13 @@ const publishJob = async (
   options: Record<string, any>
 ) => {
   const jobSchedulerService = container.resolve("jobSchedulerService");
-  jobSchedulerService.create("publish-products", {}, "*/13 * * * *", async () => {
+  jobSchedulerService.create("publish-products", {}, "*/40 * * * *", async () => {
     // job to execute
     const productService = container.resolve("productService");
     const draftProducts = await productService.list({
       status: "draft",
     });
-
+    console.log('number of draft products: ', draftProducts.length)
     for (const product of draftProducts) {
       await productService.update(product.id, {
         status: "published",
