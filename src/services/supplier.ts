@@ -36,7 +36,7 @@ class SupplierService extends TransactionBaseService {
       });
   
       const productFilesDirectory =
-        "/public_html/nutri-stock/powerbody.xls";
+        "/public_html/nutri-stock/medusa/powerbody.xls";
       const localDirectory = "./product_downloads";
       const localFilePath = `${localDirectory}/powerbody.xls`;
   
