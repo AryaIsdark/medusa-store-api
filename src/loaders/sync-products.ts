@@ -8,7 +8,7 @@ const SyncProductsJob = async (
     options: Record<string, any>
 ) => {
     const jobSchedulerService = container.resolve("jobSchedulerService");
-    jobSchedulerService.create("sync-products-cron-job", {}, "0 2 * * *", async () => {
+    jobSchedulerService.create("sync-products-cron-job", {}, "*/2 * * * *", async () => {
         const supplierService = container.resolve("supplierService");
         const syncProductsService = container.resolve("syncProductsService");
 
