@@ -5,11 +5,17 @@ import crypto from "crypto";
 
 // Helper function to extract the integer value from the "QTY" property
 const extractQuantity = (qty) => {
+  if(!qty){
+    return 0
+  }
+  if(typeof qty === 'number'){
+    return qty
+  }
   // Use regular expression to remove non-numeric characters
   const numericValue = qty.replace(/\D/g, "");
   // Parse the numeric value as an integer
   return parseInt(numericValue, 10);
-};
+};  
 
 const getNonFlatKeys = (obj) => {
   const nonFlatKeys = [];
@@ -117,8 +123,8 @@ export const processExcelFile = async (file) => {
     }
 
     // Extract the integer value from the "QTY" property
-    // row["quantity"] = extractQuantity(row["QTY"]) ;
-    row["quantity"] = 100 ;
+    row["quantity"] = extractQuantity(row["QTY"]) ;
+    // row["quantity"] = 100 ;
   });
 
   // Count the number of variants for each parent_id
