@@ -88,7 +88,7 @@ class SupplierProductService extends TransactionBaseService {
     const supplierRepo = this.manager_.withRepository(
       this.supplierProductRepository
     );
-    const newSupplier = await supplierRepo.create();
+    const newSupplier = await supplierRepo.create(data);
     return await supplierRepo.save(newSupplier);
   }
 
