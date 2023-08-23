@@ -25,6 +25,7 @@ import SupplierProductVariantService from "./supplier-product-variant";
 import { SupplierProductVariant } from "models/supplier-product-variant";
 import { exchangeRates } from "../helpers/price-helpers";
 import ErrorLogService from "./error-log";
+import WmsService from "./wms";
 
 class SyncProductsService extends TransactionBaseService {
   private errorLogService: ErrorLogService;
@@ -34,6 +35,7 @@ class SyncProductsService extends TransactionBaseService {
   private productVariantService: ProductVariantService;
   private shippingProfileService: ShippingProfileService;
   private salesChannelService: SalesChannelService;
+  private wmsService: WmsService
 
   private defaulShippingProfilePromise;
   private defaultSalesChannelPromise;
@@ -49,6 +51,7 @@ class SyncProductsService extends TransactionBaseService {
     this.productVariantService = container.productVariantService;
     this.shippingProfileService = container.shippingProfileService;
     this.salesChannelService = container.salesChannelService;
+    this.wmsService = container.wmsService
 
     this.defaulShippingProfilePromise =
       this.shippingProfileService.retrieveDefault();
@@ -152,7 +155,8 @@ class SyncProductsService extends TransactionBaseService {
           prices: this.getPrices(data.wholeSalePrice),
         };
         try {
-          await this.productVariantService.create(parentProduct.id, variant);
+          const createdVariant : ProductVariant = await this.productVariantService.create(parentProduct.id, variant);
+          await this.syncWmsArticle(createdVariant)
         } catch (e) {
           this.logError(data.id, e);
         }
@@ -203,6 +207,15 @@ class SyncProductsService extends TransactionBaseService {
       return await this.productService.retrieveByExternalId(supplierProduct.id);
     } catch (e) {
       // await this.logError(supplierProduct.id, e);
+    }
+  }
+
+  async syncWmsArticle(variant: ProductVariant){
+    try{
+      await this.wmsService.createArticles([variant])
+    }
+    catch(e){
+      this.logError(variant.id, e)
     }
   }
 
