@@ -260,7 +260,9 @@ class SyncProductsService extends TransactionBaseService {
   }
 
   async syncProductsAndVariants() {
+    
     const supplierProducts = await this.supplierProductService.list();
+    
     const supplierProductVariants =
       await this.supplierProductVariantService.list();
     await this.syncProducts(supplierProducts);

@@ -80,6 +80,7 @@ class SupplierProductService extends TransactionBaseService {
   }
 
   async create(data) {
+    console.log('create',data)
     const existingProducts = await this.search({ parentId: data.parentId });
     if (existingProducts.length) {
       throw new Error("Product with given parentId already exists");
@@ -87,7 +88,7 @@ class SupplierProductService extends TransactionBaseService {
     const supplierRepo = this.manager_.withRepository(
       this.supplierProductRepository
     );
-    const newSupplier = await supplierRepo.create(data);
+    const newSupplier = await supplierRepo.create();
     return await supplierRepo.save(newSupplier);
   }
 

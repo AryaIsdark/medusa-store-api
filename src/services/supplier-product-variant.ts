@@ -32,6 +32,7 @@ class SupplierProductVariantService extends TransactionBaseService {
   }
 
   async create(data: SupplierProductVariant) {
+    console.log('varian create',data)
     const existingProducts = await this.search({ sku: data.sku });
 
     if (existingProducts.length) {
