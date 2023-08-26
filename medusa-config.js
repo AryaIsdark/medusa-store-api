@@ -74,8 +74,8 @@ const plugins = [
             objectID: product.id, 
             title: product.title,
             description: product.description,
-            thumbnail: product.thumbnail
-             
+            thumbnail: product.thumbnail,
+            handle: product.handle
             // other attributes...
           }),
         },
