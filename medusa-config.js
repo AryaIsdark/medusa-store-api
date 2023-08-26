@@ -70,6 +70,14 @@ const plugins = [
               "images",
             ],
           },
+          transformer: (product) => ({ 
+            objectID: product.id, 
+            title: product.title,
+            description: product.description,
+            thumbnail: product.thumbnail
+             
+            // other attributes...
+          }),
         },
       },
     },
