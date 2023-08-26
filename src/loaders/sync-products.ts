@@ -9,9 +9,7 @@ const SyncProductsJob = async (
 ) => {
 
     
-    if(process.env.ENVIRONMENT === 'development'){
-        return
-    }
+    return
     const jobSchedulerService = container.resolve("jobSchedulerService");
     jobSchedulerService.create("sync-products-cron-job", {}, "0 */12 * * *", async () => {
         const supplierService = container.resolve("supplierService");
