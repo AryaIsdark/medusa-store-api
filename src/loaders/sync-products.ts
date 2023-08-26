@@ -7,6 +7,11 @@ const SyncProductsJob = async (
     container: AwilixContainer,
     options: Record<string, any>
 ) => {
+
+    
+    if(process.env.ENVIRONMENT === 'development'){
+        return
+    }
     const jobSchedulerService = container.resolve("jobSchedulerService");
     jobSchedulerService.create("sync-products-cron-job", {}, "0 */12 * * *", async () => {
         const supplierService = container.resolve("supplierService");

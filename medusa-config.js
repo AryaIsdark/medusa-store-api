@@ -1,5 +1,7 @@
 const dotenv = require("dotenv");
 
+
+
 let ENV_FILE_NAME = "";
 switch (process.env.NODE_ENV) {
   case "production":
@@ -22,6 +24,8 @@ try {
 } catch (e) {}
 
 // CORS when consuming Medusa from admin
+console.log('ALGOLIA_APP_ID: ',process.ALGOLIA_APP_ID)
+console.log('ALGOLIA_APP_ID: ',process.env.ADMIN_CORS )
 const ADMIN_CORS =
   process.env.ADMIN_CORS || "http://localhost:7000,http://localhost:7001";
 
@@ -45,6 +49,37 @@ const plugins = [
       auth_webhook_id: process.env.PAYPAL_AUTH_WEBHOOK_ID,
     },
   },
+  {
+    resolve: `medusa-plugin-algolia`,
+    options: {
+      applicationId: process.env.ALGOLIA_APP_ID,
+      adminApiKey: process.env.ALGOLIA_ADMIN_API_KEY,
+      settings: {
+        products: {
+          indexSettings: {
+            searchableAttributes: ["title", "description"],
+            attributesToRetrieve: [
+              "id",
+              "title",
+              "description",
+              "handle",
+              "thumbnail",
+              "variants",
+              "variant_sku",
+              "options",
+              "collection_title",
+              "collection_handle",
+              "images",
+            ],
+          },
+          transformer: (product) => ({ 
+            objectID: product.id, 
+            // other attributes...
+          }),
+        },
+      },
+    },
+  },
   // To enable the admin plugin, uncomment the following lines and run `yarn add @medusajs/admin`
   // {
   //   resolve: "@medusajs/admin",
@@ -65,7 +100,7 @@ const projectConfig = {
   admin_cors: ADMIN_CORS,
 };
 
-if (process.env.ENVIRONMENT !== "development") {
+
   modules = {
     eventBus: {
       resolve: "@medusajs/event-bus-redis",
@@ -82,7 +117,7 @@ if (process.env.ENVIRONMENT !== "development") {
   };
 
   projectConfig.redis_url = REDIS_URL;
-}
+
 
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
 
