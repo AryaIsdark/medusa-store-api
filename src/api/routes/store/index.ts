@@ -8,6 +8,7 @@ import ftpDownload from "./ftp-download";
 import readFiles from "./read-files";
 import syncProducts from "./sync-products";
 import syncSupplierProducts from "./sync-supplier-products";
+import searchProducts from "./search-products";
 
 // Initialize a custom router
 const router = Router();
@@ -26,4 +27,5 @@ export function attachStoreRoutes(storeRouter: Router) {
   router.get("/reset-db", wrapHandler(resetDb));
   router.get("/ftp-download", wrapHandler(ftpDownload));
   router.get("/read-files", wrapHandler(readFiles));
+  router.get("/search-products", wrapHandler(searchProducts));
 }
