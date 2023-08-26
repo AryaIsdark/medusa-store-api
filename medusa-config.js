@@ -24,8 +24,6 @@ try {
 } catch (e) {}
 
 // CORS when consuming Medusa from admin
-console.log('ALGOLIA_APP_ID: ',process.ALGOLIA_APP_ID)
-console.log('ALGOLIA_APP_ID: ',process.env.ADMIN_CORS )
 const ADMIN_CORS =
   process.env.ADMIN_CORS || "http://localhost:7000,http://localhost:7001";
 
@@ -72,10 +70,6 @@ const plugins = [
               "images",
             ],
           },
-          transformer: (product) => ({ 
-            objectID: product.id, 
-            // other attributes...
-          }),
         },
       },
     },
