@@ -58,6 +58,7 @@ const plugins = [
             searchableAttributes: ["title", "description"],
             attributesToRetrieve: [
               "id",
+              "status",
               "title",
               "description",
               "handle",
