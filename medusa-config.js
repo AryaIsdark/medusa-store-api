@@ -75,7 +75,9 @@ const plugins = [
             title: product.title,
             description: product.description,
             thumbnail: product.thumbnail,
-            handle: product.handle
+            handle: product.handle,
+            collection_handle: product.collection_handle,
+            status: product.status,
             // other attributes...
           }),
         },
