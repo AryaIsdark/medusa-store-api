@@ -42,7 +42,6 @@
     "medusa-payment-manual": "^1.0.23",
     "medusa-payment-paypal": "^6.0.1",
     "medusa-payment-stripe": "^6.0.0",
-    "medusa-plugin-algolia": "^0.2.20",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.3",
     "string-similarity": "^4.0.4",

@@ -1,7 +1,6 @@
 const dotenv = require("dotenv");
 
 
-
 let ENV_FILE_NAME = "";
 switch (process.env.NODE_ENV) {
   case "production":
@@ -47,44 +46,7 @@ const plugins = [
       auth_webhook_id: process.env.PAYPAL_AUTH_WEBHOOK_ID,
     },
   },
-  {
-    resolve: `medusa-plugin-algolia`,
-    options: {
-      applicationId: process.env.ALGOLIA_APP_ID,
-      adminApiKey: process.env.ALGOLIA_ADMIN_API_KEY,
-      settings: {
-        products: {
-          indexSettings: {
-            searchableAttributes: ["title", "description","status"],
-            attributesToRetrieve: [
-              "id",
-              "status",
-              "title",
-              "description",
-              "handle",
-              "thumbnail",
-              "variants",
-              "variant_sku",
-              "options",
-              "collection_title",
-              "collection_handle",
-              "images",
-            ],
-          },
-          transformer: (product) => ({ 
-            objectID: product.id, 
-            title: product.title,
-            description: product.description,
-            thumbnail: product.thumbnail,
-            handle: product.handle,
-            collection_handle: product.collection_handle,
-            status: product.status,
-            // other attributes...
-          }),
-        },
-      },
-    },
-  },
+  
   // To enable the admin plugin, uncomment the following lines and run `yarn add @medusajs/admin`
   // {
   //   resolve: "@medusajs/admin",
@@ -104,7 +66,6 @@ const projectConfig = {
   database_url: DATABASE_URL,
   admin_cors: ADMIN_CORS,
 };
-
 
   modules = {
     eventBus: {
