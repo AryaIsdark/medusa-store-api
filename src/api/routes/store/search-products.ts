@@ -22,7 +22,7 @@ export default async (req: Request, res: Response): Promise<void> => {
       FROM product
       JOIN product_variant ON product.id = product_variant.product_id
       WHERE product.status = 'published'
-      AND LOWER(product_variant.title) LIKE '%${productName}%';`
+      AND product_variant.title ILIKE '%${productName}%';`
     );
 
     // Close the connection when you're done
