@@ -7,6 +7,8 @@ const SyncProductsJob = async (
     container: AwilixContainer,
     options: Record<string, any>
 ) => {
+
+    console.log('process.env.ENVIRONMENT',process.env.ENVIRONMENT)
     if(process.env.ENVIRONMENT === 'development'){
         return
     }
