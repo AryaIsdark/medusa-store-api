@@ -10,6 +10,7 @@ import syncProducts from "./sync-products";
 import syncSupplierProducts from "./sync-supplier-products";
 import searchProducts from "./search-products";
 import publishProducts from "./publish-products";
+import syncOrders from "./sync-orders";
 
 // Initialize a custom router
 const router = Router();
@@ -30,4 +31,5 @@ export function attachStoreRoutes(storeRouter: Router) {
   router.get("/read-files", wrapHandler(readFiles));
   router.get("/search-products", wrapHandler(searchProducts));
   router.get("/publish-products", wrapHandler(publishProducts));
+  router.get("/sync-orders", wrapHandler(syncOrders));
 }
